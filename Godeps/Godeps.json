@@ -1,0 +1,13 @@
+{
+	"ImportPath": "github.com/xoebus/anderson",
+	"GoVersion": "go1.3",
+	"Packages": [
+		"./..."
+	],
+	"Deps": [
+		{
+			"ImportPath": "github.com/mitchellh/colorstring",
+			"Rev": "9797cb57e314a5a2c4d735ff060d5c6dcba57749"
+		}
+	]
+}
