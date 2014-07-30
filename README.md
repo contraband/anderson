@@ -25,6 +25,7 @@ github.com/xoebus/greylist                                  BORDERLINE
 You can configure *anderson* to be more or less lenient when checking you dependencies. A file called .anderson.yml in the root of your Go package will be checked when you run it.
 
 ``` yml
+---
 whitelist:
 - MIT
 
