@@ -8,13 +8,13 @@
 
 ```
 $ anderson
-Hold still citizen, scanning dependencies for contraband...
+> Hold still citizen, scanning dependencies for contraband...
 
 github.com/xoebus/apache                                    CHECKS OUT
 github.com/xoebus/copyright                                 CONTRABAND
 github.com/xoebus/mit                                       CHECKS OUT
 
-We found questionable material. Citizen, what do you have to say for yourself?
+> We found questionable material. Citizen, what do you have to say for yourself?
 
 github.com/xoebus/no-license                                NO LICENSE
 github.com/xoebus/greylist                                  BORDERLINE
