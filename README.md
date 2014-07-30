@@ -1,4 +1,4 @@
-# anderson
+# anderson [WIP]
 
 *checks your go dependencies for contraband licenses*
 
