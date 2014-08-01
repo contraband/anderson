@@ -1,7 +1,6 @@
 package integration_test
 
 import (
-	"fmt"
 	"os/exec"
 	"path/filepath"
 
@@ -37,7 +36,7 @@ var _ = Describe("Anderson", func() {
 	BeforeEach(func() {
 		andersonCommand = exec.Command(andersonPath)
 		andersonCommand.Dir = filepath.Join("src", "github.com", "xoebus", "prime")
-		andersonCommand.Env = append(andersonCommand.Env, fmt.Sprintf("GOPATH=%s", filepath.Join("integration")))
+		andersonCommand.Env = append(andersonCommand.Env, "GOPATH=.")
 	})
 
 	It("does some cheesy dredd scene-setting", func() {
