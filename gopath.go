@@ -29,7 +29,7 @@ func LookGopath(packagePath string) (string, error) {
 			// Unix shell semantics: path element "" means "."
 			dir = "."
 		}
-		path := filepath.Join(dir, packagePath)
+		path := filepath.Join(dir, "src", packagePath)
 		if err := findPackage(path); err == nil {
 			return path, nil
 		}

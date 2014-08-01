@@ -1,0 +1,12 @@
+---
+whitelist:
+- MIT
+
+greylist:
+- Apache-2.0
+
+blacklist:
+- GPL-2.0
+
+exceptions:
+- github.com/xoebus/greylist-approve

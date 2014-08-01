@@ -1,0 +1,29 @@
+{
+	"ImportPath": "github.com/xoebus/prime",
+	"GoVersion": "go1.3",
+	"Packages": [
+		"./..."
+	],
+	"Deps": [
+		{
+			"ImportPath": "github.com/xoebus/whitelist",
+			"Rev": "000000"
+		},
+		{
+			"ImportPath": "github.com/xoebus/greylist-approve",
+			"Rev": "000000"
+		},
+		{
+			"ImportPath": "github.com/xoebus/greylist-unknown",
+			"Rev": "000000"
+		},
+		{
+			"ImportPath": "github.com/xoebus/no-license",
+			"Rev": "000000"
+		},
+		{
+			"ImportPath": "github.com/xoebus/blacklist",
+			"Rev": "000000"
+		}
+	]
+}
