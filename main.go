@@ -31,7 +31,8 @@ func main() {
 
 	configFile, err := os.Open(".anderson.yml")
 	if err != nil {
-		panic(err)
+		say("[red]> You seem to be missing your .anderson.yml...")
+		os.Exit(1)
 	}
 
 	var config Config
@@ -49,6 +50,8 @@ func main() {
 		panic(err)
 	}
 
+	failed := false
+
 	for _, dependency := range godep.Deps {
 		path, err := LookGopath(dependency.ImportPath)
 		if err != nil {
@@ -60,6 +63,7 @@ func main() {
 		if err != nil {
 			if err.Error() == "license: unable to find any license file" {
 				say(fmt.Sprintf("[white]%s%s[magenta]NO LICENSE", dependency.ImportPath, whitespace))
+				failed = true
 			} else {
 				panic(err)
 			}
@@ -68,6 +72,7 @@ func main() {
 
 		if contains(config.Blacklist, l.Type) {
 			say(fmt.Sprintf("[white]%s%s[red]CONTRABAND", dependency.ImportPath, whitespace))
+			failed = true
 			continue
 		}
 
@@ -81,11 +86,14 @@ func main() {
 				say(fmt.Sprintf("[white]%s%s[green]CHECKS OUT", dependency.ImportPath, whitespace))
 			} else {
 				say(fmt.Sprintf("[white]%s%s[yellow]BORDERLINE", dependency.ImportPath, whitespace))
+				failed = true
 			}
 			continue
 		}
+	}
 
-		fmt.Println(l.Type)
+	if failed {
+		os.Exit(1)
 	}
 }
 
