@@ -36,7 +36,7 @@ var _ = Describe("Anderson", func() {
 
 	BeforeEach(func() {
 		andersonCommand = exec.Command(andersonPath)
-		andersonCommand.Dir = filepath.Join("src", "github.com", "xoebus", "prime")
+		andersonCommand.Dir = filepath.Join("_ignore", "src", "github.com", "xoebus", "prime")
 
 		gopath, err := filepath.Abs(".")
 		Ω(err).ShouldNot(HaveOccurred())

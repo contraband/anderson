@@ -6,8 +6,25 @@
 	],
 	"Deps": [
 		{
+			"ImportPath": "github.com/fraenkel/candiedyaml",
+			"Rev": "84842532f8194fe186b48a009251dfaec9924ccd"
+		},
+		{
 			"ImportPath": "github.com/mitchellh/colorstring",
 			"Rev": "9797cb57e314a5a2c4d735ff060d5c6dcba57749"
+		},
+		{
+			"ImportPath": "github.com/onsi/ginkgo",
+			"Comment": "v1.0.0-28-g6481765",
+			"Rev": "6481765dda39cbaae281109e6945449642329197"
+		},
+		{
+			"ImportPath": "github.com/onsi/gomega",
+			"Rev": "4699d5a664396173c7d9fcef9e88be297c7bae13"
+		},
+		{
+			"ImportPath": "github.com/ryanuber/go-license",
+			"Rev": "955de2d723b7a72e8b6e80e7f6e6d3c5aff06132"
 		}
 	]
 }
