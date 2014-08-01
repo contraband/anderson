@@ -27,6 +27,12 @@ type Dependency struct {
 }
 
 func main() {
+	license.DefaultLicenseFiles = []string{
+		"LICENSE", "LICENSE.txt", "LICENSE.md", "license.txt",
+		"COPYING", "COPYING.txt", "COPYING.md", "copying.txt",
+		"MIT.LICENSE",
+	}
+
 	say("[blue]> Hold still citizen, scanning dependencies for contraband...")
 
 	configFile, err := os.Open(".anderson.yml")
@@ -64,9 +70,13 @@ func main() {
 			if err.Error() == "license: unable to find any license file" {
 				say(fmt.Sprintf("[white]%s%s[magenta]NO LICENSE", dependency.ImportPath, whitespace))
 				failed = true
+			} else if err.Error() == "license: could not guess license type" {
+				say(fmt.Sprintf("[white]%s%s   [cyan]UNKNOWN", dependency.ImportPath, whitespace))
 			} else {
 				panic(err)
 			}
+			failed = true
+
 			continue
 		}
 
