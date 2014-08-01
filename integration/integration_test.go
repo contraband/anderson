@@ -7,6 +7,8 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+
+	"github.com/onsi/gomega/gbytes"
 	"github.com/onsi/gomega/gexec"
 
 	"testing"
@@ -38,7 +40,7 @@ var _ = Describe("Anderson", func() {
 		andersonCommand.Env = append(andersonCommand.Env, fmt.Sprintf("GOPATH=%s", filepath.Join("integration")))
 	})
 
-	It("runs", func() {
+	It("does some cheesy dredd scene-setting", func() {
 		session, err := gexec.Start(
 			andersonCommand,
 			gexec.NewPrefixedWriter("\x1b[32m[o]\x1b[95m[anderson]\x1b[0m ", GinkgoWriter),
@@ -46,6 +48,8 @@ var _ = Describe("Anderson", func() {
 		)
 		Ω(err).ShouldNot(HaveOccurred())
 
+		Eventually(session).Should(gbytes.Say("Hold still citizen, scanning dependencies for contraband..."))
+		Eventually(session).Should(gbytes.Say("We found questionable material. Citizen, what do you have to say for yourself?"))
 		Eventually(session).Should(gexec.Exit(0))
 	})
 })
