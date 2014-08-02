@@ -26,6 +26,30 @@ type Dependency struct {
 	ImportPath string
 }
 
+type GodepsLister struct {
+}
+
+func (l GodepsLister) ListDependencies() []string {
+	godepsFile, err := os.Open("Godeps/Godeps.json")
+	if err != nil {
+		fatal("Couldn't find your Godeps.json file!")
+	}
+	defer godepsFile.Close()
+
+	var godep Godeps
+	if err := json.NewDecoder(godepsFile).Decode(&godep); err != nil {
+		fatal("Your Godeps file wasn't valid JSON!")
+	}
+
+	deps := []string{}
+
+	for _, dep := range godep.Deps {
+		deps = append(deps, dep.ImportPath)
+	}
+
+	return deps
+}
+
 func main() {
 	license.DefaultLicenseFiles = []string{
 		"LICENSE", "LICENSE.txt", "LICENSE.md", "license.txt",
@@ -45,20 +69,10 @@ func main() {
 		panic(err)
 	}
 
-	godepsFile, err := os.Open("Godeps/Godeps.json")
-	if err != nil {
-		fatal("Couldn't find your Godeps.json file!")
-	}
-
-	var godep Godeps
-	if err := json.NewDecoder(godepsFile).Decode(&godep); err != nil {
-		fatal("Your Godeps file wasn't valid JSON!")
-	}
+	lister := GodepsLister{}
 
 	failed := false
-
-	for _, dependency := range godep.Deps {
-		importPath := dependency.ImportPath
+	for _, importPath := range lister.ListDependencies() {
 		path, err := LookGopath(importPath)
 		if err != nil {
 			fatal(fmt.Sprintf("Could not find %s in your GOPATH...", importPath))
