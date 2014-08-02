@@ -38,7 +38,7 @@ var _ = Describe("Anderson", func() {
 		andersonCommand = exec.Command(andersonPath)
 		andersonCommand.Dir = filepath.Join("_ignore", "src", "github.com", "xoebus", "prime")
 
-		gopath, err := filepath.Abs(".")
+		gopath, err := filepath.Abs(filepath.Join("_ignore"))
 		Ω(err).ShouldNot(HaveOccurred())
 		andersonCommand.Env = append(andersonCommand.Env, fmt.Sprintf("GOPATH=%s", gopath))
 	})
@@ -52,7 +52,7 @@ var _ = Describe("Anderson", func() {
 		Ω(err).ShouldNot(HaveOccurred())
 
 		Eventually(session).Should(gbytes.Say("Hold still citizen, scanning dependencies for contraband..."))
-		Eventually(session).Should(gexec.Exit(0))
+		Eventually(session).Should(gexec.Exit(1))
 	})
 
 	It("shows whitelisted licenses as 'CHECKS OUT'", func() {
@@ -64,7 +64,7 @@ var _ = Describe("Anderson", func() {
 		Ω(err).ShouldNot(HaveOccurred())
 
 		Eventually(session).Should(gbytes.Say("github.com/xoebus/whitelist.*CHECKS OUT"))
-		Eventually(session).Should(gexec.Exit(0))
+		Eventually(session).Should(gexec.Exit(1))
 	})
 
 	It("shows blacklisted licenses as 'CONTRABAND'", func() {
@@ -76,7 +76,7 @@ var _ = Describe("Anderson", func() {
 		Ω(err).ShouldNot(HaveOccurred())
 
 		Eventually(session).Should(gbytes.Say("github.com/xoebus/blacklist.*CONTRABAND"))
-		Eventually(session).Should(gexec.Exit(0))
+		Eventually(session).Should(gexec.Exit(1))
 	})
 
 	It("shows projects with no license as 'NO LICENSE'", func() {
@@ -88,6 +88,6 @@ var _ = Describe("Anderson", func() {
 		Ω(err).ShouldNot(HaveOccurred())
 
 		Eventually(session).Should(gbytes.Say("github.com/xoebus/no-license.*NO LICENSE"))
-		Eventually(session).Should(gexec.Exit(0))
+		Eventually(session).Should(gexec.Exit(1))
 	})
 })

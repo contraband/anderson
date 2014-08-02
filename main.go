@@ -61,7 +61,7 @@ func main() {
 	for _, dependency := range godep.Deps {
 		path, err := LookGopath(dependency.ImportPath)
 		if err != nil {
-			continue
+			panic(err)
 		}
 
 		l, err := license.NewFromDir(path)
