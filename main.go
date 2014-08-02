@@ -83,7 +83,7 @@ func (c LicenseClassifier) Classify(path string, importPath string) LicenseStatu
 		}
 	}
 
-	panic("uh oh")
+	return LicenseTypeMarginal
 }
 
 type LicenseStatus int
