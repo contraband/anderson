@@ -100,9 +100,9 @@ func (s LicenseStatus) Color() string {
 		return "read"
 	case LicenseTypeMarginal:
 		return "yellow"
+	default:
+		return "red"
 	}
-
-	panic("uh oh")
 }
 
 func (s LicenseStatus) Message() string {
@@ -117,9 +117,9 @@ func (s LicenseStatus) Message() string {
 		return "CONTRABAND"
 	case LicenseTypeMarginal:
 		return "BORDERLINE"
+	default:
+		return "ERROR"
 	}
-
-	panic("uh oh")
 }
 
 func (s LicenseStatus) FailsBuild() bool {
@@ -134,9 +134,9 @@ func (s LicenseStatus) FailsBuild() bool {
 		return true
 	case LicenseTypeMarginal:
 		return true
+	default:
+		return true
 	}
-
-	panic("uh oh")
 }
 
 const (
