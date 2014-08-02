@@ -26,8 +26,7 @@ type Dependency struct {
 	ImportPath string
 }
 
-type GodepsLister struct {
-}
+type GodepsLister struct{}
 
 func (l GodepsLister) ListDependencies() []string {
 	godepsFile, err := os.Open("Godeps/Godeps.json")
@@ -50,6 +49,104 @@ func (l GodepsLister) ListDependencies() []string {
 	return deps
 }
 
+type LicenseClassifier struct {
+	Config Config
+}
+
+func (c LicenseClassifier) Classify(path string, importPath string) LicenseStatus {
+	l, err := license.NewFromDir(path)
+
+	if err != nil {
+		switch err.Error() {
+		case license.ErrNoLicenseFile:
+			return LicenseTypeNoLicense
+		case license.ErrUnrecognizedLicense:
+			return LicenseTypeUnknown
+		default:
+			fatal(fmt.Sprintf("Could not determine license for: %s", importPath))
+		}
+	}
+
+	if contains(c.Config.Blacklist, l.Type) {
+		return LicenseTypeBanned
+	}
+
+	if contains(c.Config.Whitelist, l.Type) {
+		return LicenseTypeAllowed
+	}
+
+	if contains(c.Config.Greylist, l.Type) {
+		if contains(c.Config.Exceptions, importPath) {
+			return LicenseTypeAllowed
+		} else {
+			return LicenseTypeMarginal
+		}
+	}
+
+	panic("uh oh")
+}
+
+type LicenseStatus int
+
+func (s LicenseStatus) Color() string {
+	switch s {
+	case LicenseTypeUnknown:
+		return "magenta"
+	case LicenseTypeNoLicense:
+		return "cyan"
+	case LicenseTypeAllowed:
+		return "green"
+	case LicenseTypeBanned:
+		return "read"
+	case LicenseTypeMarginal:
+		return "yellow"
+	}
+
+	panic("uh oh")
+}
+
+func (s LicenseStatus) Message() string {
+	switch s {
+	case LicenseTypeUnknown:
+		return "UNKNOWN"
+	case LicenseTypeNoLicense:
+		return "NO LICENSE"
+	case LicenseTypeAllowed:
+		return "CHECKS OUT"
+	case LicenseTypeBanned:
+		return "CONTRABAND"
+	case LicenseTypeMarginal:
+		return "BORDERLINE"
+	}
+
+	panic("uh oh")
+}
+
+func (s LicenseStatus) FailsBuild() bool {
+	switch s {
+	case LicenseTypeUnknown:
+		return true
+	case LicenseTypeNoLicense:
+		return true
+	case LicenseTypeAllowed:
+		return false
+	case LicenseTypeBanned:
+		return true
+	case LicenseTypeMarginal:
+		return true
+	}
+
+	panic("uh oh")
+}
+
+const (
+	LicenseTypeUnknown LicenseStatus = iota
+	LicenseTypeNoLicense
+	LicenseTypeBanned
+	LicenseTypeAllowed
+	LicenseTypeMarginal
+)
+
 func main() {
 	license.DefaultLicenseFiles = []string{
 		"LICENSE", "LICENSE.txt", "LICENSE.md", "license.txt",
@@ -70,6 +167,9 @@ func main() {
 	}
 
 	lister := GodepsLister{}
+	classifier := LicenseClassifier{
+		Config: config,
+	}
 
 	failed := false
 	for _, importPath := range lister.ListDependencies() {
@@ -78,42 +178,12 @@ func main() {
 			fatal(fmt.Sprintf("Could not find %s in your GOPATH...", importPath))
 		}
 
-		l, err := license.NewFromDir(path)
-		whitespace := strings.Repeat(" ", 80-10-len(importPath))
-		if err != nil {
-			if err.Error() == "license: unable to find any license file" {
-				say(fmt.Sprintf("[white]%s%s[magenta]NO LICENSE", importPath, whitespace))
-				failed = true
-			} else if err.Error() == "license: could not guess license type" {
-				say(fmt.Sprintf("[white]%s%s   [cyan]UNKNOWN", importPath, whitespace))
-			} else {
-				panic(err)
-			}
-			failed = true
+		licenseType := classifier.Classify(path, importPath)
+		failed = failed || licenseType.FailsBuild()
+		message := licenseType.Message()
 
-			continue
-		}
-
-		if contains(config.Blacklist, l.Type) {
-			say(fmt.Sprintf("[white]%s%s[red]CONTRABAND", importPath, whitespace))
-			failed = true
-			continue
-		}
-
-		if contains(config.Whitelist, l.Type) {
-			say(fmt.Sprintf("[white]%s%s[green]CHECKS OUT", importPath, whitespace))
-			continue
-		}
-
-		if contains(config.Greylist, l.Type) {
-			if contains(config.Exceptions, importPath) {
-				say(fmt.Sprintf("[white]%s%s[green]CHECKS OUT", importPath, whitespace))
-			} else {
-				say(fmt.Sprintf("[white]%s%s[yellow]BORDERLINE", importPath, whitespace))
-				failed = true
-			}
-			continue
-		}
+		whitespace := strings.Repeat(" ", 80-len(message)-len(importPath))
+		say(fmt.Sprintf("[white]%s%s[%s]%s", importPath, whitespace, licenseType.Color(), message))
 	}
 
 	if failed {
