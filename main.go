@@ -59,8 +59,16 @@ func (c LicenseClassifier) Classify(path string, importPath string) LicenseStatu
 	if err != nil {
 		switch err.Error() {
 		case license.ErrNoLicenseFile:
+			if contains(c.Config.Exceptions, importPath) {
+				return LicenseTypeAllowed
+			}
+
 			return LicenseTypeNoLicense
 		case license.ErrUnrecognizedLicense:
+			if contains(c.Config.Exceptions, importPath) {
+				return LicenseTypeAllowed
+			}
+
 			return LicenseTypeUnknown
 		default:
 			fatal(fmt.Sprintf("Could not determine license for: %s", importPath))

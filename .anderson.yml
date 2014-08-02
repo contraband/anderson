@@ -1,5 +1,12 @@
 ---
-whitelist: []
+whitelist:
+- MIT
+- Apache-2.0
+
 blacklist: []
+
 greylist: []
-exceptions: []
+
+exceptions:
+- github.com/onsi/ginkgo
+- github.com/onsi/gomega
