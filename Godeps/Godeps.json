@@ -11,7 +11,7 @@
 		},
 		{
 			"ImportPath": "github.com/mitchellh/colorstring",
-			"Rev": "9797cb57e314a5a2c4d735ff060d5c6dcba57749"
+			"Rev": "15fc698eaae194ff160846daf77922a45b9290a7"
 		},
 		{
 			"ImportPath": "github.com/onsi/ginkgo",
@@ -24,7 +24,7 @@
 		},
 		{
 			"ImportPath": "github.com/ryanuber/go-license",
-			"Rev": "955de2d723b7a72e8b6e80e7f6e6d3c5aff06132"
+			"Rev": "de984a5dd4cd73f358ea470f8c732bf40d93861a"
 		}
 	]
 }
