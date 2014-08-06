@@ -53,45 +53,45 @@ type LicenseClassifier struct {
 	Config Config
 }
 
-func (c LicenseClassifier) Classify(path string, importPath string) LicenseStatus {
+func (c LicenseClassifier) Classify(path string, importPath string) (LicenseStatus, string) {
 	l, err := license.NewFromDir(path)
 
 	if err != nil {
 		switch err.Error() {
 		case license.ErrNoLicenseFile:
 			if contains(c.Config.Exceptions, importPath) {
-				return LicenseTypeAllowed
+				return LicenseTypeAllowed, "Unknown"
 			}
 
-			return LicenseTypeNoLicense
+			return LicenseTypeNoLicense, "Unknown"
 		case license.ErrUnrecognizedLicense:
 			if contains(c.Config.Exceptions, importPath) {
-				return LicenseTypeAllowed
+				return LicenseTypeAllowed, "Unknown"
 			}
 
-			return LicenseTypeUnknown
+			return LicenseTypeUnknown, "Unknown"
 		default:
 			fatal(fmt.Sprintf("Could not determine license for: %s", importPath))
 		}
 	}
 
 	if contains(c.Config.Blacklist, l.Type) {
-		return LicenseTypeBanned
+		return LicenseTypeBanned, l.Type
 	}
 
 	if contains(c.Config.Whitelist, l.Type) {
-		return LicenseTypeAllowed
+		return LicenseTypeAllowed, l.Type
 	}
 
 	if contains(c.Config.Greylist, l.Type) {
 		if contains(c.Config.Exceptions, importPath) {
-			return LicenseTypeAllowed
+			return LicenseTypeAllowed, l.Type
 		} else {
-			return LicenseTypeMarginal
+			return LicenseTypeMarginal, l.Type
 		}
 	}
 
-	return LicenseTypeMarginal
+	return LicenseTypeMarginal, l.Type
 }
 
 type LicenseStatus int
@@ -164,14 +164,15 @@ func main() {
 
 	say("[blue]> Hold still citizen, scanning dependencies for contraband...")
 
+	emptyConfig := true
+	config := Config{}
 	configFile, err := os.Open(".anderson.yml")
-	if err != nil {
-		fatal("You seem to be missing your .anderson.yml...")
-	}
+	if err == nil {
+		if err := candiedyaml.NewDecoder(configFile).Decode(&config); err != nil {
+			fatal("Looks like your .anderson.yml file is invalid YAML!")
+		}
 
-	var config Config
-	if err := candiedyaml.NewDecoder(configFile).Decode(&config); err != nil {
-		panic(err)
+		emptyConfig = false
 	}
 
 	lister := GodepsLister{}
@@ -186,12 +187,22 @@ func main() {
 			fatal(fmt.Sprintf("Could not find %s in your GOPATH...", importPath))
 		}
 
-		licenseType := classifier.Classify(path, importPath)
+		licenseType, licenseName := classifier.Classify(path, importPath)
 		failed = failed || licenseType.FailsBuild()
-		message := licenseType.Message()
+
+		var message string
+		var color string
+
+		if emptyConfig {
+			message = licenseName
+			color = "white"
+		} else {
+			message = licenseType.Message()
+			color = licenseType.Color()
+		}
 
 		whitespace := strings.Repeat(" ", 80-len(message)-len(importPath))
-		say(fmt.Sprintf("[white]%s%s[%s]%s", importPath, whitespace, licenseType.Color(), message))
+		say(fmt.Sprintf("[white]%s%s[%s]%s", importPath, whitespace, color, message))
 	}
 
 	if failed {
