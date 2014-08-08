@@ -5,8 +5,6 @@ whitelist:
 
 blacklist: []
 
-greylist: []
-
 exceptions:
 - github.com/onsi/ginkgo
 - github.com/onsi/gomega

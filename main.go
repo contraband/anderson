@@ -13,7 +13,6 @@ import (
 
 type Config struct {
 	Whitelist  []string `yaml:"whitelist"`
-	Greylist   []string `yaml:"greylist"`
 	Blacklist  []string `yaml:"blacklist"`
 	Exceptions []string `yaml:"exceptions"`
 }
@@ -83,15 +82,11 @@ func (c LicenseClassifier) Classify(path string, importPath string) (LicenseStat
 		return LicenseTypeAllowed, l.Type
 	}
 
-	if contains(c.Config.Greylist, l.Type) {
-		if contains(c.Config.Exceptions, importPath) {
-			return LicenseTypeAllowed, l.Type
-		} else {
-			return LicenseTypeMarginal, l.Type
-		}
+	if contains(c.Config.Exceptions, importPath) {
+		return LicenseTypeAllowed, l.Type
+	} else {
+		return LicenseTypeMarginal, l.Type
 	}
-
-	return LicenseTypeMarginal, l.Type
 }
 
 type LicenseStatus int
