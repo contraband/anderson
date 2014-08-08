@@ -100,7 +100,7 @@ func (s LicenseStatus) Color() string {
 	case LicenseTypeAllowed:
 		return "green"
 	case LicenseTypeBanned:
-		return "read"
+		return "red"
 	case LicenseTypeMarginal:
 		return "yellow"
 	default:
