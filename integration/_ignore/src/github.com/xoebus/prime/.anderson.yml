@@ -2,9 +2,6 @@
 whitelist:
 - MIT
 
-greylist:
-- Apache-2.0
-
 blacklist:
 - GPL-2.0
 
