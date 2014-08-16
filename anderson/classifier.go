@@ -2,8 +2,14 @@ package anderson
 
 import (
 	"fmt"
+	"path/filepath"
+	"strings"
 
 	"github.com/ryanuber/go-license"
+)
+
+const (
+	maxParentHops = 10
 )
 
 type LicenseClassifier struct {
@@ -11,6 +17,24 @@ type LicenseClassifier struct {
 }
 
 func (c LicenseClassifier) Classify(path string, importPath string) (LicenseStatus, string, error) {
+	for hops := 0; hops < maxParentHops; hops++ {
+		newPath := c.parentPath(path, hops)
+
+		if c.pathIsAGopath(newPath) {
+			break
+		}
+
+		status, licenseType, err := c.classifyPath(newPath, importPath)
+
+		if status != LicenseTypeNoLicense {
+			return status, licenseType, err
+		}
+	}
+
+	return LicenseTypeNoLicense, "Unknown", nil
+}
+
+func (c LicenseClassifier) classifyPath(path string, importPath string) (LicenseStatus, string, error) {
 	l, err := license.NewFromDir(path)
 
 	if err != nil {
@@ -45,6 +69,21 @@ func (c LicenseClassifier) Classify(path string, importPath string) (LicenseStat
 	} else {
 		return LicenseTypeMarginal, l.Type, nil
 	}
+}
+
+func (c LicenseClassifier) pathIsAGopath(path string) bool {
+	paths, _ := Gopaths()
+
+	return contains(paths, path)
+}
+
+func (c LicenseClassifier) parentPath(path string, hops int) string {
+	dots := strings.Fields(strings.Repeat(".. ", hops))
+	elements := []string{}
+	elements = append(elements, path)
+	elements = append(elements, dots...)
+
+	return filepath.Clean(filepath.Join(elements...))
 }
 
 func contains(haystack []string, needle string) bool {

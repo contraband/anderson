@@ -19,12 +19,12 @@ func findPackage(packagePath string) error {
 }
 
 func LookGopath(packagePath string) (string, error) {
-	gopathenv := os.Getenv("GOPATH")
-	if gopathenv == "" {
-		return "", errors.New("GOPATH not set")
+	paths, err := Gopaths()
+	if err != nil {
+		return "", err
 	}
 
-	for _, dir := range strings.Split(gopathenv, ":") {
+	for _, dir := range paths {
 		if dir == "" {
 			// Unix shell semantics: path element "" means "."
 			dir = "."
@@ -36,4 +36,13 @@ func LookGopath(packagePath string) (string, error) {
 	}
 
 	return "", errors.New("could not find package in GOPATH")
+}
+
+func Gopaths() ([]string, error) {
+	gopathenv := os.Getenv("GOPATH")
+	if gopathenv == "" {
+		return []string{}, errors.New("GOPATH not set")
+	}
+
+	return strings.Split(gopathenv, ":"), nil
 }

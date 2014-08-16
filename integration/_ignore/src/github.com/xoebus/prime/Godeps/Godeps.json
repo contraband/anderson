@@ -22,6 +22,10 @@
 			"Rev": "000000"
 		},
 		{
+			"ImportPath": "github.com/xoebus/nested/subdir",
+			"Rev": "000000"
+		},
+		{
 			"ImportPath": "github.com/xoebus/blacklist",
 			"Rev": "000000"
 		}

@@ -82,4 +82,11 @@ var _ = Describe("Anderson", func() {
 		Eventually(session).Should(Say("github.com/xoebus/no-license.*NO LICENSE"))
 		Eventually(session).Should(Exit(1))
 	})
+
+	It("handles dependencies that are in subdirectories of their root that contains the license", func() {
+		session := runAnderson()
+
+		Eventually(session).Should(Say("github.com/xoebus/nested/subdir.*CHECKS OUT"))
+		Eventually(session).Should(Exit(1))
+	})
 })
