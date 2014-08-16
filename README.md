@@ -1,4 +1,4 @@
-# anderson
+# anderson [![Build Status](https://travis-ci.org/xoebus/anderson.svg?branch=master)](https://travis-ci.org/xoebus/anderson)
 
 *checks your go dependencies for contraband licenses*
 
