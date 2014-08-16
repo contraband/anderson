@@ -9,6 +9,8 @@ import (
 	"github.com/fraenkel/candiedyaml"
 	"github.com/mitchellh/colorstring"
 	"github.com/ryanuber/go-license"
+
+	"github.com/xoebus/anderson/anderson"
 )
 
 type Config struct {
@@ -177,7 +179,7 @@ func main() {
 
 	failed := false
 	for _, importPath := range lister.ListDependencies() {
-		path, err := LookGopath(importPath)
+		path, err := anderson.LookGopath(importPath)
 		if err != nil {
 			fatal(fmt.Sprintf("Could not find %s in your GOPATH...", importPath))
 		}
