@@ -66,9 +66,9 @@ func (c LicenseClassifier) classifyPath(path string, importPath string) (License
 
 	if contains(c.Config.Exceptions, importPath) {
 		return LicenseTypeAllowed, l.Type, nil
-	} else {
-		return LicenseTypeMarginal, l.Type, nil
 	}
+
+	return LicenseTypeMarginal, l.Type, nil
 }
 
 func (c LicenseClassifier) pathIsAGopath(path string) bool {
