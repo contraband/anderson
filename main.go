@@ -1,80 +1,33 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"strings"
 
 	"github.com/fraenkel/candiedyaml"
 	"github.com/mitchellh/colorstring"
-	"github.com/ryanuber/go-license"
 
 	"github.com/xoebus/anderson/anderson"
 )
-
-type Config struct {
-	Whitelist  []string `yaml:"whitelist"`
-	Blacklist  []string `yaml:"blacklist"`
-	Exceptions []string `yaml:"exceptions"`
-}
-
-type LicenseClassifier struct {
-	Config Config
-}
-
-func (c LicenseClassifier) Classify(path string, importPath string) (LicenseStatus, string) {
-	l, err := license.NewFromDir(path)
-
-	if err != nil {
-		switch err.Error() {
-		case license.ErrNoLicenseFile:
-			if contains(c.Config.Exceptions, importPath) {
-				return LicenseTypeAllowed, "Unknown"
-			}
-
-			return LicenseTypeNoLicense, "Unknown"
-		case license.ErrUnrecognizedLicense:
-			if contains(c.Config.Exceptions, importPath) {
-				return LicenseTypeAllowed, "Unknown"
-			}
-
-			return LicenseTypeUnknown, "Unknown"
-		default:
-			fatal(fmt.Sprintf("Could not determine license for: %s", importPath))
-		}
-	}
-
-	if contains(c.Config.Blacklist, l.Type) {
-		return LicenseTypeBanned, l.Type
-	}
-
-	if contains(c.Config.Whitelist, l.Type) {
-		return LicenseTypeAllowed, l.Type
-	}
-
-	if contains(c.Config.Exceptions, importPath) {
-		return LicenseTypeAllowed, l.Type
-	} else {
-		return LicenseTypeMarginal, l.Type
-	}
-}
 
 func main() {
 	say("[blue]> Hold still citizen, scanning dependencies for contraband...")
 
 	emptyConfig := true
-	config := Config{}
+	config := anderson.Config{}
 	configFile, err := os.Open(".anderson.yml")
 	if err == nil {
 		if err := candiedyaml.NewDecoder(configFile).Decode(&config); err != nil {
-			fatal("Looks like your .anderson.yml file is invalid YAML!")
+			fatal(errors.New("Looks like your .anderson.yml file is invalid YAML!"))
 		}
 
 		emptyConfig = false
 	}
 
 	lister := anderson.GodepsLister{}
-	classifier := LicenseClassifier{
+	classifier := anderson.LicenseClassifier{
 		Config: config,
 	}
 
@@ -82,16 +35,16 @@ func main() {
 
 	dependencies, err := lister.ListDependencies()
 	if err != nil {
-		fatal(err.Error())
+		fatal(err)
 	}
 
 	for _, importPath := range dependencies {
 		path, err := anderson.LookGopath(importPath)
 		if err != nil {
-			fatal(fmt.Sprintf("Could not find %s in your GOPATH...", importPath))
+			fatal(fmt.Errorf("Could not find %s in your GOPATH...", importPath))
 		}
 
-		licenseType, licenseName := classifier.Classify(path, importPath)
+		licenseType, licenseName, err := classifier.Classify(path, importPath)
 		failed = failed || licenseType.FailsBuild()
 
 		var message string
@@ -114,20 +67,11 @@ func main() {
 	}
 }
 
-func fatal(message string) {
-	say(fmt.Sprintf("[red]> %s", message))
+func fatal(err error) {
+	say(fmt.Sprintf("[red]> %s", err))
 	os.Exit(1)
 }
 
 func say(message string) {
 	fmt.Println(colorstring.Color(message))
-}
-
-func contains(haystack []string, needle string) bool {
-	for _, element := range haystack {
-		if element == needle {
-			return true
-		}
-	}
-	return false
 }
