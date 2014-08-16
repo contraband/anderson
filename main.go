@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 	"strings"
@@ -17,37 +16,6 @@ type Config struct {
 	Whitelist  []string `yaml:"whitelist"`
 	Blacklist  []string `yaml:"blacklist"`
 	Exceptions []string `yaml:"exceptions"`
-}
-
-type Godeps struct {
-	Deps []Dependency
-}
-
-type Dependency struct {
-	ImportPath string
-}
-
-type GodepsLister struct{}
-
-func (l GodepsLister) ListDependencies() []string {
-	godepsFile, err := os.Open("Godeps/Godeps.json")
-	if err != nil {
-		fatal("Couldn't find your Godeps.json file!")
-	}
-	defer godepsFile.Close()
-
-	var godep Godeps
-	if err := json.NewDecoder(godepsFile).Decode(&godep); err != nil {
-		fatal("Your Godeps file wasn't valid JSON!")
-	}
-
-	deps := []string{}
-
-	for _, dep := range godep.Deps {
-		deps = append(deps, dep.ImportPath)
-	}
-
-	return deps
 }
 
 type LicenseClassifier struct {
@@ -166,13 +134,19 @@ func main() {
 		emptyConfig = false
 	}
 
-	lister := GodepsLister{}
+	lister := anderson.GodepsLister{}
 	classifier := LicenseClassifier{
 		Config: config,
 	}
 
 	failed := false
-	for _, importPath := range lister.ListDependencies() {
+
+	dependencies, err := lister.ListDependencies()
+	if err != nil {
+		fatal(err.Error())
+	}
+
+	for _, importPath := range dependencies {
 		path, err := anderson.LookGopath(importPath)
 		if err != nil {
 			fatal(fmt.Sprintf("Could not find %s in your GOPATH...", importPath))
