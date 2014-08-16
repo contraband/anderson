@@ -1,0 +1,7 @@
+#!/bin/bash
+
+set -e
+
+rm -rf Godeps
+go get -u -t ./...
+godep save ./...
