@@ -153,12 +153,6 @@ const (
 )
 
 func main() {
-	license.DefaultLicenseFiles = []string{
-		"LICENSE", "LICENSE.txt", "LICENSE.md", "license.txt",
-		"COPYING", "COPYING.txt", "COPYING.md", "copying.txt",
-		"MIT.LICENSE",
-	}
-
 	say("[blue]> Hold still citizen, scanning dependencies for contraband...")
 
 	emptyConfig := true
