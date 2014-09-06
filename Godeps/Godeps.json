@@ -15,8 +15,8 @@
 		},
 		{
 			"ImportPath": "github.com/onsi/ginkgo",
-			"Comment": "v1.1.0-1-g32204a3",
-			"Rev": "32204a3eab0576cbea19f5ff8b27d3a928647ea6"
+			"Comment": "v1.1.0-9-g7b9e081",
+			"Rev": "7b9e081dc43c4171e2855eb80fdab9a6b9fa604d"
 		},
 		{
 			"ImportPath": "github.com/onsi/gomega",
@@ -25,7 +25,7 @@
 		},
 		{
 			"ImportPath": "github.com/ryanuber/go-license",
-			"Rev": "de984a5dd4cd73f358ea470f8c732bf40d93861a"
+			"Rev": "ab6daaeff70943343cb875ef937267a39aec42cf"
 		}
 	]
 }

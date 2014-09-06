@@ -18,19 +18,20 @@ func TestNewLicense(t *testing.T) {
 }
 
 func TestNewFromFile(t *testing.T) {
-	f, err := ioutil.TempFile("", "go-license")
+	lf := filepath.Join("fixtures", "licenses", "MIT")
+
+	lh, err := os.Open(lf)
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
-	defer os.Remove(f.Name())
+	defer lh.Close()
 
-	licenseText := "The MIT License (MIT)"
-
-	if _, err := f.WriteString(licenseText); err != nil {
+	licenseText, err := ioutil.ReadAll(lh)
+	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
-	l, err := NewFromFile(f.Name())
+	l, err := NewFromFile(lf)
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
@@ -39,11 +40,11 @@ func TestNewFromFile(t *testing.T) {
 		t.Fatalf("unexpected license type: %s", l.Type)
 	}
 
-	if l.Text != licenseText {
+	if l.Text != string(licenseText) {
 		t.Fatalf("unexpected license text: %s", l.Text)
 	}
 
-	if l.File != f.Name() {
+	if l.File != lf {
 		t.Fatalf("unexpected file path: %s", l.File)
 	}
 
@@ -53,9 +54,13 @@ func TestNewFromFile(t *testing.T) {
 	}
 
 	// Fails properly if license type from file is not guessable
-	if err := os.Truncate(f.Name(), 0); err != nil {
+	f, err := ioutil.TempFile("", "go-license")
+	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
+	defer f.Close()
+	defer os.Remove(f.Name())
+
 	f.WriteString("No license data")
 	if _, err := NewFromFile(f.Name()); err == nil {
 		t.Fatalf("expected error guessing license type from non-license file")
@@ -80,9 +85,18 @@ func TestNewFromDir(t *testing.T) {
 		t.Fatalf("err: %s", err)
 	}
 
-	licenseText := "The MIT License (MIT)"
+	lh, err := os.Open(filepath.Join("fixtures", "licenses", "MIT"))
+	if err != nil {
+		t.Fatalf("err: %s", err)
+	}
+	defer lh.Close()
 
-	if _, err := f.WriteString(licenseText); err != nil {
+	licenseText, err := ioutil.ReadAll(lh)
+	if err != nil {
+		t.Fatalf("err: %s", err)
+	}
+
+	if _, err := f.Write(licenseText); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
@@ -95,7 +109,7 @@ func TestNewFromDir(t *testing.T) {
 		t.Fatalf("unexpected license type: %s", l.Type)
 	}
 
-	if l.Text != licenseText {
+	if l.Text != string(licenseText) {
 		t.Fatalf("unexpected license text: %s", l.Text)
 	}
 
@@ -129,25 +143,24 @@ func TestLicenseRecognized(t *testing.T) {
 }
 
 func TestLicenseTypes(t *testing.T) {
-	licenseStrings := []string{
-		"The MIT License (MIT)",
-		"Apache License\nVersion 2.0, January 2004",
-		"GNU GENERAL PUBLIC LICENSE\nVersion 2, June 1991",
-		"GNU GENERAL PUBLIC LICENSE\nVersion 3, 29 June 2007",
-		"GNU LESSER GENERAL PUBLIC LICENSE\nVersion 2.1, February 1999",
-		"GNU LESSER GENERAL PUBLIC LICENSE\nVersion 3, 29 June 2007",
-		"Mozilla Public License Version 2.0",
-		"Redistribution and use in source and binary forms\n4. Neither",
-		"Redistribution and use in source and binary forms\n* Redistributions",
-		"Redistribution and use in source and binary forms\nFreeBSD Project.",
-		"(CDDL)\nVersion 1.0",
-		"Eclipse Public License - v 1.0",
-	}
+	for _, ltype := range KnownLicenses {
+		file := filepath.Join("fixtures", "licenses", ltype)
+		fh, err := os.Open(file)
+		if err != nil {
+			t.Fatalf("err: %s", err)
+		}
+		lbytes, err := ioutil.ReadAll(fh)
+		if err != nil {
+			t.Fatalf("err :%s", err)
+		}
+		ltext := string(lbytes)
 
-	for _, s := range licenseStrings {
-		l := New("", s)
+		l := New("", ltext)
 		if err := l.GuessType(); err != nil {
-			t.Fatalf("failed to identify license: %s", s)
+			t.Fatalf("failed to identify license: %s", ltext)
+		}
+		if l.Type != ltype {
+			t.Fatalf("\nexpected: %s\ngot: %s", ltype, l.Type)
 		}
 	}
 }

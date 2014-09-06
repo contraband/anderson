@@ -25,44 +25,44 @@ names.
 ## Recognized License Types
 
 `MIT`<br>
-The MIT license. ([text](http://opensource.org/licenses/MIT))
+The MIT license. ([text](fixtures/licenses/MIT))
 
 `NewBSD`<br>
 The "new" or "revised" BSD license.
-([text](http://opensource.org/licenses/BSD-3-Clause))
+([text](fixtures/licenses/NewBSD))
 
 `FreeBSD`<br>
 The "simplified" BSD  license.
-([text](http://opensource.org/licenses/BSD-2-Clause))
+([text](fixtures/licenses/FreeBSD))
 
 `Apache-2.0`<br>
-Apache License, version 2.0 ([text](http://opensource.org/licenses/Apache-2.0))
+Apache License, version 2.0 ([text](fixtures/licenses/Apache-2.0))
 
 `MPL-2.0`<br>
-The Mozilla Public License v2.0 ([text](http://opensource.org/licenses/MPL-2.0))
+The Mozilla Public License v2.0 ([text](fixtures/licenses/MPL-2.0))
 
 `GPL-2.0`<br>
 The GNU General Public License v2.0
-([text](http://opensource.org/licenses/GPL-2.0))
+([text](fixtures/licenses/GPL-2.0))
 
 `GPL-3.0`<br>
 The GNU General Public License v3.0
-([text](http://opensource.org/licenses/GPL-3.0))
+([text](fixtures/licenses/GPL-3.0))
 
 `LGPL-2.1`<br>
 GNU Library or "Lesser" General Public License v2.1
-([text](http://opensource.org/licenses/LGPL-2.1))
+([text](fixtures/licenses/LGPL-2.1))
 
 `LGPL-3.0`<br>
 GNU Library or "Lesser" General Public License v3.0
-([text](http://opensource.org/licenses/LGPL-3.0))
+([text](fixtures/licenses/LGPL-3.0))
 
 `CDDL-1.0`<br>
 Common Development and Distribution License v1.0
-([text](http://opensource.org/licenses/CDDL-1.0))
+([text](fixtures/licenses/CDDL-1.0))
 
 `EPL-1.0`<br>
-Eclipse Public License v1.0 ([text](http://opensource.org/licenses/EPL-1.0))
+Eclipse Public License v1.0 ([text](fixtures/licenses/EPL-1.0))
 
 ## Example
 
