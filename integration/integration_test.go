@@ -2,6 +2,7 @@ package integration_test
 
 import (
 	"fmt"
+	"os"
 	"os/exec"
 	"path/filepath"
 
@@ -41,6 +42,7 @@ var _ = Describe("Anderson", func() {
 
 		gopath, err := filepath.Abs(filepath.Join("_ignore"))
 		Ω(err).ShouldNot(HaveOccurred())
+		andersonCommand.Env = append(andersonCommand.Env, fmt.Sprintf("PATH=%s", os.Getenv("PATH")))
 		andersonCommand.Env = append(andersonCommand.Env, fmt.Sprintf("GOPATH=%s", gopath))
 	})
 
@@ -86,7 +88,7 @@ var _ = Describe("Anderson", func() {
 	It("handles dependencies that are in subdirectories of their root that contains the license", func() {
 		session := runAnderson()
 
-		Eventually(session).Should(Say("github.com/xoebus/nested/subdir.*CHECKS OUT"))
+		Eventually(session).Should(Say(`github.com/xoebus/nested[^/].*CHECKS OUT`)) // does not show subdir
 		Eventually(session).Should(Exit(1))
 	})
 })

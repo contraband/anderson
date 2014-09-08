@@ -1,9 +1,10 @@
 package anderson
 
 import (
-	"encoding/json"
-	"errors"
+	"bytes"
 	"os"
+	"os/exec"
+	"strings"
 )
 
 type Godeps struct {
@@ -17,22 +18,25 @@ type Dependency struct {
 type GodepsLister struct{}
 
 func (l GodepsLister) ListDependencies() ([]string, error) {
-	godepsFile, err := os.Open("Godeps/Godeps.json")
+	out := new(bytes.Buffer)
+
+	cmd := exec.Command(
+		"bash",
+		"-c",
+		"go list -f $'{{range $dep := .Deps}}{{$dep}}\n{{end}}' ./... | "+
+			"xargs go list -f '{{if not .Standard}}{{.ImportPath}}{{end}}'",
+	)
+
+	cmd.Stdout = out
+	cmd.Stderr = os.Stderr
+
+	err := cmd.Run()
 	if err != nil {
-		return []string{}, errors.New("Couldn't find your Godeps.json file!")
-	}
-	defer godepsFile.Close()
-
-	var godep Godeps
-	if err := json.NewDecoder(godepsFile).Decode(&godep); err != nil {
-		return []string{}, errors.New("Your Godeps file wasn't valid JSON!")
+		return nil, err
 	}
 
-	deps := []string{}
+	deps := strings.Split(out.String(), "\n")
 
-	for _, dep := range godep.Deps {
-		deps = append(deps, dep.ImportPath)
-	}
-
-	return deps, nil
+	// strip trailing linebreak causing extra split
+	return deps[0 : len(deps)-1], nil
 }
