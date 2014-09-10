@@ -38,6 +38,26 @@ func LookGopath(packagePath string) (string, error) {
 	return "", errors.New("could not find package in GOPATH")
 }
 
+func ContainingGopath(packagePath string) (string, error) {
+	paths, err := Gopaths()
+	if err != nil {
+		return "", err
+	}
+
+	for _, dir := range paths {
+		if dir == "" {
+			// Unix shell semantics: path element "" means "."
+			dir = "."
+		}
+		path := filepath.Join(dir, "src", packagePath)
+		if err := findPackage(path); err == nil {
+			return dir, nil
+		}
+	}
+
+	return "", errors.New("could not find package in GOPATH")
+}
+
 func Gopaths() ([]string, error) {
 	gopathenv := os.Getenv("GOPATH")
 	if gopathenv == "" {

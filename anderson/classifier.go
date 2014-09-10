@@ -16,10 +16,9 @@ type LicenseClassifier struct {
 	Config Config
 }
 
-func (c LicenseClassifier) Classify(path string, importPath string) (LicenseStatus, string, error) {
+func (c LicenseClassifier) Classify(path string, importPath string) (LicenseStatus, string, string, error) {
 	for hops := 0; hops < maxParentHops; hops++ {
 		newPath := c.parentPath(path, hops)
-
 		if c.pathIsAGopath(newPath) {
 			break
 		}
@@ -27,11 +26,11 @@ func (c LicenseClassifier) Classify(path string, importPath string) (LicenseStat
 		status, licenseType, err := c.classifyPath(newPath, importPath)
 
 		if status != LicenseTypeNoLicense {
-			return status, licenseType, err
+			return status, newPath, licenseType, err
 		}
 	}
 
-	return LicenseTypeNoLicense, "Unknown", nil
+	return LicenseTypeNoLicense, path, "Unknown", nil
 }
 
 func (c LicenseClassifier) classifyPath(path string, importPath string) (LicenseStatus, string, error) {

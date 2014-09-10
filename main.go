@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/fraenkel/candiedyaml"
@@ -11,6 +12,11 @@ import (
 
 	"github.com/xoebus/anderson/anderson"
 )
+
+type License struct {
+	Type anderson.LicenseStatus
+	Name string
+}
 
 func main() {
 	say("[blue]> Hold still citizen, scanning dependencies for contraband...")
@@ -38,28 +44,48 @@ func main() {
 		fatal(err)
 	}
 
+	classified := map[string]License{}
 	for _, importPath := range dependencies {
 		path, err := anderson.LookGopath(importPath)
 		if err != nil {
 			fatal(fmt.Errorf("Could not find %s in your GOPATH...", importPath))
 		}
 
-		licenseType, licenseName, err := classifier.Classify(path, importPath)
+		licenseType, licenseDeclarationPath, licenseName, err := classifier.Classify(path, importPath)
 		failed = failed || licenseType.FailsBuild()
 
+		containingGopath, err := anderson.ContainingGopath(importPath)
+		if err != nil {
+			fatal(fmt.Errorf("Unable to find containing GOPATH for %s: %s", licenseDeclarationPath, err))
+		}
+
+		relPath, err := filepath.Rel(filepath.Join(containingGopath, "src"), licenseDeclarationPath)
+		if err != nil {
+			fatal(fmt.Errorf("Unable to create relative path for %s: %s", licenseDeclarationPath, err))
+		}
+
+		classified[relPath] = License{Type: licenseType, Name: licenseName}
+	}
+
+	for relPath, license := range classified {
 		var message string
 		var color string
 
 		if emptyConfig {
-			message = licenseName
+			message = license.Name
 			color = "white"
 		} else {
-			message = licenseType.Message()
-			color = licenseType.Color()
+			message = license.Type.Message()
+			color = license.Type.Color()
 		}
 
-		whitespace := strings.Repeat(" ", 80-len(message)-len(importPath))
-		say(fmt.Sprintf("[white]%s%s[%s]%s", importPath, whitespace, color, message))
+		totalSize := len(message) + len(relPath)
+		whitespace := " "
+		if totalSize < 80 {
+			whitespace = strings.Repeat(" ", 80-totalSize)
+		}
+
+		say(fmt.Sprintf("[white]%s%s[%s]%s", relPath, whitespace, color, message))
 	}
 
 	if failed {
