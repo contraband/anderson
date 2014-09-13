@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
-	"log"
 	"os"
 	"os/exec"
 	"sort"
@@ -78,23 +77,23 @@ func (l PackageLister) loadPackages(name ...string) (packages []*Package, err er
 	return packages, nil
 }
 
-func (l PackageLister) listDeps(pkgs []*Package) ([]string, error) {
+func (l PackageLister) listDeps(packages []*Package) ([]string, error) {
 	var err error
 	var path, seen []string
 
 	dependencies := []string{}
 
-	for _, p := range pkgs {
-		if p.Standard {
+	for _, pkg := range packages {
+		if pkg.Standard {
 			continue
 		}
 
-		if p.Error.Err != "" {
+		if pkg.Error.Err != "" {
 			err = errors.New("error loading packages")
 			continue
 		}
 
-		path = append(path, p.Deps...)
+		path = append(path, pkg.Deps...)
 	}
 
 	if err != nil {
@@ -102,29 +101,28 @@ func (l PackageLister) listDeps(pkgs []*Package) ([]string, error) {
 	}
 
 	var testImports []string
-	for _, p := range pkgs {
-		testImports = append(testImports, p.TestImports...)
-		testImports = append(testImports, p.XTestImports...)
+	for _, pkg := range packages {
+		testImports = append(testImports, pkg.TestImports...)
+		testImports = append(testImports, pkg.XTestImports...)
 	}
 
-	ps, err := l.loadPackages(testImports...)
+	testPackages, err := l.loadPackages(testImports...)
 	if err != nil {
 		return []string{}, err
 	}
 
-	for _, p := range ps {
-		if p.Standard {
+	for _, pkg := range testPackages {
+		if pkg.Standard {
 			continue
 		}
 
-		if p.Error.Err != "" {
-			log.Println(p.Error.Err)
+		if pkg.Error.Err != "" {
 			err = errors.New("error loading packages")
 			continue
 		}
 
-		path = append(path, p.ImportPath)
-		path = append(path, p.Deps...)
+		path = append(path, pkg.ImportPath)
+		path = append(path, pkg.Deps...)
 	}
 
 	if err != nil {
@@ -134,12 +132,12 @@ func (l PackageLister) listDeps(pkgs []*Package) ([]string, error) {
 	sort.Strings(path)
 	path = uniq(path)
 
-	ps, err = l.loadPackages(path...)
+	allPackages, err := l.loadPackages(path...)
 	if err != nil {
 		return []string{}, err
 	}
 
-	for _, pkg := range ps {
+	for _, pkg := range allPackages {
 		if pkg.Error.Err != "" {
 			err = errors.New("error loading dependencies")
 			continue
