@@ -16,8 +16,8 @@ valid licenses. The syntax of this file can be found below.
 
 ![Without Config](media/with-config.png)
 
-[Godeps](https://github.com/tools/godep) is the only supported dependency
-manager at the moment.
+Most of the package and dependency listing code was graciously taken from
+[Godep](https://github.com/tools/godep).
 
 ## installation
 
