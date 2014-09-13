@@ -18,10 +18,6 @@ type Package struct {
 	Deps       []string
 	Standard   bool
 
-	GoFiles        []string
-	CgoFiles       []string
-	IgnoredGoFiles []string
-
 	TestGoFiles  []string
 	TestImports  []string
 	XTestGoFiles []string
