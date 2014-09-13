@@ -39,39 +39,43 @@ func (l PackageLister) ListDependencies() ([]string, error) {
 	return l.listDeps(packages)
 }
 
-func (l PackageLister) loadPackages(name ...string) (a []*Package, err error) {
+func (l PackageLister) loadPackages(name ...string) (packages []*Package, err error) {
 	if len(name) == 0 {
 		return nil, nil
 	}
 
 	args := []string{"list", "-e", "-json"}
 	cmd := exec.Command("go", append(args, name...)...)
-	r, err := cmd.StdoutPipe()
+	stdout, err := cmd.StdoutPipe()
 	if err != nil {
 		return nil, err
 	}
+
 	cmd.Stderr = os.Stderr
 	err = cmd.Start()
 	if err != nil {
 		return nil, err
 	}
-	d := json.NewDecoder(r)
+
+	decoder := json.NewDecoder(stdout)
 	for {
 		info := new(Package)
-		err = d.Decode(info)
+		err = decoder.Decode(info)
 		if err == io.EOF {
 			break
 		}
 		if err != nil {
 			info.Error.Err = err.Error()
 		}
-		a = append(a, info)
+		packages = append(packages, info)
 	}
+
 	err = cmd.Wait()
 	if err != nil {
 		return nil, err
 	}
-	return a, nil
+
+	return packages, nil
 }
 
 func (l PackageLister) listDeps(pkgs []*Package) ([]string, error) {
