@@ -5,6 +5,4 @@ whitelist:
 
 blacklist: []
 
-exceptions:
-- github.com/onsi/ginkgo
-- github.com/onsi/gomega
+exceptions: []
