@@ -157,10 +157,21 @@ func TestLicenseTypes(t *testing.T) {
 
 		l := New("", ltext)
 		if err := l.GuessType(); err != nil {
-			t.Fatalf("failed to identify license: %s", ltext)
+			t.Fatalf("err: %s", err)
 		}
 		if l.Type != ltype {
 			t.Fatalf("\nexpected: %s\ngot: %s", ltype, l.Type)
 		}
+	}
+}
+
+func TestLicenseTypes_Abbreviated(t *testing.T) {
+	// Abbreviated Apache 2.0 license is recognized
+	l := New("", "http://www.apache.org/licenses/LICENSE-2.0")
+	if err := l.GuessType(); err != nil {
+		t.Fatalf("err: %s", err)
+	}
+	if l.Type != LicenseApache20 {
+		t.Fatalf("\nexpected: %s\ngot: %s", LicenseApache20, l.Type)
 	}
 }

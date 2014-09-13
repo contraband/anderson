@@ -97,7 +97,9 @@ func main() {
 
     // This case will work when the license type can be guessed based on text
     l = new(license.License)
-    l.Text = "The MIT License (MIT)"
+    l.Text = "permission is hereby granted, free of charge, to any person " +
+        "obtaining a copy of this software"
+
     if err := l.GuessType(); err != nil {
         fmt.Println(err.Error())
         return

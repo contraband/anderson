@@ -1,6 +1,6 @@
 {
 	"ImportPath": "github.com/xoebus/anderson",
-	"GoVersion": "go1.3",
+	"GoVersion": "go1.3.1",
 	"Packages": [
 		"./..."
 	],
@@ -15,17 +15,17 @@
 		},
 		{
 			"ImportPath": "github.com/onsi/ginkgo",
-			"Comment": "v1.1.0-9-g7b9e081",
-			"Rev": "7b9e081dc43c4171e2855eb80fdab9a6b9fa604d"
+			"Comment": "v1.1.0-11-ge809316",
+			"Rev": "e8093161dcbdab0a59dfe56f3f8c867d243ac75f"
 		},
 		{
 			"ImportPath": "github.com/onsi/gomega",
-			"Comment": "v1.0",
-			"Rev": "a78ae492d53aad5a7a232d0d0462c14c400e3ee7"
+			"Comment": "v1.0-12-g3ca2515",
+			"Rev": "3ca2515afb00bc39bc77d27cdbce85a7caaf103e"
 		},
 		{
 			"ImportPath": "github.com/ryanuber/go-license",
-			"Rev": "ab6daaeff70943343cb875ef937267a39aec42cf"
+			"Rev": "6d58dbce0e6f4afa0c5aceeddee2a9e349976fdf"
 		}
 	]
 }

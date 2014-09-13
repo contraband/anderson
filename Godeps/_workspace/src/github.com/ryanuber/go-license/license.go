@@ -163,7 +163,8 @@ func (l *License) GuessType() error {
 		"person obtaining a copy of this software"):
 		l.Type = LicenseMIT
 
-	case scan(comp, "apache license version 2.0, january 2004"):
+	case scan(comp, "apache license version 2.0, january 2004") ||
+		scan(comp, "http://www.apache.org/licenses/license-2.0"):
 		l.Type = LicenseApache20
 
 	case scan(comp, "gnu general public license version 2, june 1991"):
