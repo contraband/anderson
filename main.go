@@ -32,7 +32,7 @@ func main() {
 		emptyConfig = false
 	}
 
-	lister := anderson.GodepsLister{}
+	lister := anderson.PackageLister{}
 	classifier := anderson.LicenseClassifier{
 		Config: config,
 	}
