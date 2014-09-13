@@ -64,7 +64,10 @@ func main() {
 			fatal(fmt.Errorf("Unable to create relative path for %s: %s", licenseDeclarationPath, err))
 		}
 
-		classified[relPath] = License{Type: licenseType, Name: licenseName}
+		classified[relPath] = License{
+			Type: licenseType,
+			Name: licenseName,
+		}
 	}
 
 	for relPath, license := range classified {
