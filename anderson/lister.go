@@ -2,7 +2,7 @@ package anderson
 
 import (
 	"encoding/json"
-	"errors"
+	"fmt"
 	"io"
 	"os"
 	"os/exec"
@@ -89,7 +89,7 @@ func (l PackageLister) listDeps(packages []*Package) ([]string, error) {
 		}
 
 		if pkg.Error.Err != "" {
-			err = errors.New("error loading packages")
+			err = fmt.Errorf("error loading packages: %s", pkg.Error.Err)
 			continue
 		}
 
@@ -117,7 +117,7 @@ func (l PackageLister) listDeps(packages []*Package) ([]string, error) {
 		}
 
 		if pkg.Error.Err != "" {
-			err = errors.New("error loading packages")
+			err = fmt.Errorf("error loading packages: %s", pkg.Error.Err)
 			continue
 		}
 
@@ -144,7 +144,7 @@ func (l PackageLister) listDeps(packages []*Package) ([]string, error) {
 
 	for _, pkg := range allPackages {
 		if pkg.Error.Err != "" {
-			err = errors.New("error loading dependencies")
+			err = fmt.Errorf("error loading dependencies: %s", pkg.Error.Err)
 			continue
 		}
 
