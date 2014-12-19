@@ -98,4 +98,11 @@ var _ = Describe("Anderson", func() {
 		Eventually(session).Should(Say(`github.com/xoebus/nested[^/].*CHECKS OUT`)) // does not show subdir
 		Eventually(session).Should(Exit(1))
 	})
+
+	It("does not show all subdirectories of the current directory", func() {
+		session := runAnderson()
+
+		Eventually(session).Should(Exit(1))
+		Eventually(session).ShouldNot(Say(`github.com/xoebus/prime/subdir`)) // does not show subdir
+	})
 })

@@ -137,6 +137,11 @@ func (l PackageLister) listDeps(packages []*Package) ([]string, error) {
 		return []string{}, err
 	}
 
+	currentName, err := currentPackageName()
+	if err != nil {
+		return []string{}, err
+	}
+
 	for _, pkg := range allPackages {
 		if pkg.Error.Err != "" {
 			err = errors.New("error loading dependencies")
@@ -151,6 +156,10 @@ func (l PackageLister) listDeps(packages []*Package) ([]string, error) {
 			continue
 		}
 
+		if strings.HasPrefix(pkg.ImportPath, currentName) {
+			continue
+		}
+
 		seen = append(seen, pkg.ImportPath)
 		dependencies = append(dependencies, pkg.ImportPath)
 	}
@@ -160,6 +169,16 @@ func (l PackageLister) listDeps(packages []*Package) ([]string, error) {
 	}
 
 	return dependencies, nil
+}
+
+func currentPackageName() (string, error) {
+	cmd := exec.Command("go", "list")
+	output, err := cmd.Output()
+	if err != nil {
+		return "", err
+	}
+
+	return strings.TrimSpace(string(output)), nil
 }
 
 func uniq(a []string) []string {
