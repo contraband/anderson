@@ -9,4 +9,4 @@ go install github.com/xoebus/anderson
 anderson
 
 go install github.com/onsi/ginkgo/ginkgo
-ginkgo -race -r "$@"
+ginkgo -r --randomizeAllSpecs --randomizeSuites --failOnPending --trace --race --progress "$@"
