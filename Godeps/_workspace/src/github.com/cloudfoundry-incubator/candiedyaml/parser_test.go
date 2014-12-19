@@ -15,15 +15,16 @@ limitations under the License.
 package candiedyaml
 
 import (
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
 	"io/ioutil"
 	"os"
 	"path/filepath"
+
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
 )
 
-var scan = func(filename string) {
-	It("scan "+filename, func() {
+var parses = func(filename string) {
+	It("parses "+filename, func() {
 		file, err := os.Open(filename)
 		Ω(err).To(BeNil())
 
@@ -32,15 +33,16 @@ var scan = func(filename string) {
 		yaml_parser_set_input_reader(&parser, file)
 
 		failed := false
-		token := yaml_token_t{}
+		event := yaml_event_t{}
 
 		for {
-			if !yaml_parser_scan(&parser, &token) {
+			if !yaml_parser_parse(&parser, &event) {
 				failed = true
+				println("---", parser.error, parser.problem, parser.context, "line", parser.problem_mark.line, "col", parser.problem_mark.column)
 				break
 			}
 
-			if token.token_type == yaml_STREAM_END_TOKEN {
+			if event.event_type == yaml_STREAM_END_EVENT {
 				break
 			}
 		}
@@ -60,17 +62,20 @@ var scan = func(filename string) {
 	})
 }
 
-var scanYamls = func(dirname string) {
+var parseYamls = func(dirname string) {
 	fileInfos, err := ioutil.ReadDir(dirname)
-	Ω(err).To(BeNil())
+	if err != nil {
+		panic(err.Error())
+	}
+
 	for _, fileInfo := range fileInfos {
 		if !fileInfo.IsDir() {
-			scan(filepath.Join(dirname, fileInfo.Name()))
+			parses(filepath.Join(dirname, fileInfo.Name()))
 		}
 	}
 }
 
-var _ = Describe("Scanner", func() {
-	scanYamls("fixtures/specification")
-	scanYamls("fixtures/specification/types")
+var _ = Describe("Parser", func() {
+	parseYamls("fixtures/specification")
+	parseYamls("fixtures/specification/types")
 })

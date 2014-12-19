@@ -15,12 +15,14 @@ limitations under the License.
 package candiedyaml
 
 import (
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
 	"math"
 	"os"
+	"strconv"
 	"strings"
 	"time"
+
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
 )
 
 var _ = Describe("Decode", func() {
@@ -31,6 +33,35 @@ var _ = Describe("Decode", func() {
 		err := d.Decode(&v)
 
 		Ω(err).ShouldNot(HaveOccurred())
+	})
+
+	Context("strings", func() {
+		It("Decodes an empty string", func() {
+			d := NewDecoder(strings.NewReader(`""
+`))
+			var v string
+			err := d.Decode(&v)
+			Ω(err).ShouldNot(HaveOccurred())
+			Ω(v).Should(Equal(""))
+		})
+
+		It("Decodes an empty string to an interface", func() {
+			d := NewDecoder(strings.NewReader(`""
+`))
+			var v interface{}
+			err := d.Decode(&v)
+			Ω(err).ShouldNot(HaveOccurred())
+			Ω(v).Should(Equal(""))
+		})
+
+		It("Decodes a map containing empty strings to an interface", func() {
+			d := NewDecoder(strings.NewReader(`"" : ""
+`))
+			var v interface{}
+			err := d.Decode(&v)
+			Ω(err).ShouldNot(HaveOccurred())
+			Ω(v).Should(Equal(map[interface{}]interface{}{"": ""}))
+		})
 	})
 
 	Context("Sequence", func() {
@@ -105,6 +136,22 @@ var _ = Describe("Decode", func() {
 					batter{N: "Mark McGwire", H: 65, A: 0.278},
 					batter{N: "Sammy Sosa", H: 63, A: 0.288},
 				}))
+			})
+
+			It("handles null values", func() {
+				type S struct {
+					Default interface{}
+				}
+
+				d := NewDecoder(strings.NewReader(`
+---
+default:
+`))
+				var s S
+				err := d.Decode(&s)
+				Ω(err).ShouldNot(HaveOccurred())
+				Ω(s).Should(Equal(S{Default: nil}))
+
 			})
 
 			It("ignores missing tags", func() {
@@ -182,7 +229,6 @@ var _ = Describe("Decode", func() {
 			Ω(err).ShouldNot(HaveOccurred())
 			Ω(v).To(Equal(map[string][]string{"hr": []string{"Mark McGwire", "Sammy Sosa"}, "rbi": []string{"Sammy Sosa", "Ken Griffey"}}))
 		})
-
 	})
 
 	Context("Sequence of Maps", func() {
@@ -251,39 +297,85 @@ var _ = Describe("Decode", func() {
 		}))
 	})
 
-	It("Decodes a variety of ints", func() {
-		f, _ := os.Open("fixtures/specification/example2_19.yaml")
-		d := NewDecoder(f)
-		v := make(map[string]interface{})
+	Context("ints", func() {
+		It("Decodes into an interface{}", func() {
+			f, _ := os.Open("fixtures/specification/example2_19.yaml")
+			d := NewDecoder(f)
+			v := make(map[string]interface{})
 
-		err := d.Decode(&v)
-		Ω(err).ShouldNot(HaveOccurred())
-		Ω(v).Should(Equal(map[string]interface{}{
-			"canonical":   int64(12345),
-			"decimal":     int64(12345),
-			"sexagesimal": int64(12345),
-			"octal":       int64(12),
-			"hexadecimal": int64(12),
-		}))
+			err := d.Decode(&v)
+			Ω(err).ShouldNot(HaveOccurred())
+			Ω(v).Should(Equal(map[string]interface{}{
+				"canonical":   int64(12345),
+				"decimal":     int64(12345),
+				"octal":       int64(12),
+				"hexadecimal": int64(12),
+			}))
+		})
+
+		It("Decodes into int64", func() {
+			f, _ := os.Open("fixtures/specification/example2_19.yaml")
+			d := NewDecoder(f)
+			v := make(map[string]int64)
+
+			err := d.Decode(&v)
+			Ω(err).ShouldNot(HaveOccurred())
+			Ω(v).Should(Equal(map[string]int64{
+				"canonical":   int64(12345),
+				"decimal":     int64(12345),
+				"octal":       int64(12),
+				"hexadecimal": int64(12),
+			}))
+		})
+
+		Context("boundary values", func() {
+			intoInt64 := func(val int64) {
+				It("Decodes into an int64 value", func() {
+					var v int64
+
+					d := NewDecoder(strings.NewReader(strconv.FormatInt(val, 10)))
+					err := d.Decode(&v)
+					Ω(err).ShouldNot(HaveOccurred())
+					Ω(v).Should(Equal(val))
+
+				})
+			}
+
+			intoInt := func(val int) {
+				It("Decodes into an int value", func() {
+					var v int
+
+					d := NewDecoder(strings.NewReader(strconv.FormatInt(int64(val), 10)))
+					err := d.Decode(&v)
+					Ω(err).ShouldNot(HaveOccurred())
+					Ω(v).Should(Equal(val))
+
+				})
+			}
+
+			intoInterface := func(val int64) {
+				It("Decodes into an interface{}", func() {
+					var v interface{}
+
+					d := NewDecoder(strings.NewReader(strconv.FormatInt(val, 10)))
+					err := d.Decode(&v)
+					Ω(err).ShouldNot(HaveOccurred())
+					Ω(v).Should(Equal(val))
+				})
+			}
+
+			intoInt64(math.MaxInt64)
+			intoInterface(math.MaxInt64)
+
+			intoInt64(math.MinInt64)
+			intoInterface(math.MinInt64)
+
+			intoInt(math.MaxInt32)
+			intoInt(math.MinInt32)
+		})
 	})
 
-	It("Decodes a variety of ints", func() {
-		f, _ := os.Open("fixtures/specification/example2_19.yaml")
-		d := NewDecoder(f)
-		v := make(map[string]int64)
-
-		err := d.Decode(&v)
-		Ω(err).ShouldNot(HaveOccurred())
-		Ω(v).Should(Equal(map[string]int64{
-			"canonical":   int64(12345),
-			"decimal":     int64(12345),
-			"sexagesimal": int64(12345),
-			"octal":       int64(12),
-			"hexadecimal": int64(12),
-		}))
-	})
-
-	It("Decodes a variety of flots", func() {
+	It("Decodes a variety of floats", func() {
 		f, _ := os.Open("fixtures/specification/example2_20.yaml")
 		d := NewDecoder(f)
 		v := make(map[string]float64)
@@ -297,7 +389,6 @@ var _ = Describe("Decode", func() {
 		Ω(v).Should(Equal(map[string]float64{
 			"canonical":         float64(1230.15),
 			"exponential":       float64(1230.15),
-			"sexagesimal":       float64(1230.15),
 			"fixed":             float64(1230.15),
 			"negative infinity": math.Inf(-1),
 		}))
@@ -318,6 +409,15 @@ var _ = Describe("Decode", func() {
 		}))
 	})
 
+	It("Decodes a null ptr", func() {
+		d := NewDecoder(strings.NewReader(`null
+`))
+		var v *bool
+		err := d.Decode(&v)
+		Ω(err).ShouldNot(HaveOccurred())
+		Ω(v).Should(BeNil())
+	})
+
 	It("Decodes dates/time", func() {
 		f, _ := os.Open("fixtures/specification/example2_22.yaml")
 		d := NewDecoder(f)
@@ -333,47 +433,300 @@ var _ = Describe("Decode", func() {
 		}))
 	})
 
-	It("Respects tags", func() {
-		f, _ := os.Open("fixtures/specification/example2_23_non_date.yaml")
-		d := NewDecoder(f)
-		v := make(map[string]string)
+	Context("Tags", func() {
+		It("Respects tags", func() {
+			f, _ := os.Open("fixtures/specification/example2_23_non_date.yaml")
+			d := NewDecoder(f)
+			v := make(map[string]string)
 
-		err := d.Decode(&v)
-		Ω(err).ShouldNot(HaveOccurred())
-		Ω(v).Should(Equal(map[string]string{
-			"not-date": "2002-04-28",
-		}))
+			err := d.Decode(&v)
+			Ω(err).ShouldNot(HaveOccurred())
+			Ω(v).Should(Equal(map[string]string{
+				"not-date": "2002-04-28",
+			}))
+		})
+
+		It("handles non-specific tags", func() {
+			d := NewDecoder(strings.NewReader(`
+---
+not_parsed: ! 123
+`))
+			v := make(map[string]int)
+			err := d.Decode(&v)
+			Ω(err).ShouldNot(HaveOccurred())
+			Ω(v).Should(Equal(map[string]int{"not_parsed": 123}))
+		})
+
+		It("handles non-specific tags", func() {
+			d := NewDecoder(strings.NewReader(`
+---
+? a complex key
+: ! "123"
+`))
+			v := make(map[string]string)
+			err := d.Decode(&v)
+			Ω(err).ShouldNot(HaveOccurred())
+			Ω(v).Should(Equal(map[string]string{"a complex key": "123"}))
+		})
 	})
 
-	It("Decodes binary/base64", func() {
-		f, _ := os.Open("fixtures/specification/example2_23_picture.yaml")
-		d := NewDecoder(f)
-		v := make(map[string][]byte)
+	Context("Decodes binary/base64", func() {
+		It("to []byte", func() {
+			f, _ := os.Open("fixtures/specification/example2_23_picture.yaml")
+			d := NewDecoder(f)
+			v := make(map[string][]byte)
 
-		err := d.Decode(&v)
-		Ω(err).ShouldNot(HaveOccurred())
-		Ω(v).Should(Equal(map[string][]byte{
-			"picture": []byte{0x47, 0x49, 0x46, 0x38, 0x39, 0x61, 0x0c, 0x00,
-				0x0c, 0x00, 0x84, 0x00, 0x00, 0xff, 0xff, 0xf7, 0xf5, 0xf5, 0xee,
-				0xe9, 0xe9, 0xe5, 0x66, 0x66, 0x66, 0x00, 0x00, 0x00, 0xe7, 0xe7,
-				0xe7, 0x5e, 0x5e, 0x5e, 0xf3, 0xf3, 0xed, 0x8e, 0x8e, 0x8e, 0xe0,
-				0xe0, 0xe0, 0x9f, 0x9f, 0x9f, 0x93, 0x93, 0x93, 0xa7, 0xa7, 0xa7,
-				0x9e, 0x9e, 0x9e, 0x69, 0x5e, 0x10, 0x27, 0x20, 0x82, 0x0a, 0x01,
-				0x00, 0x3b},
-		}))
+			err := d.Decode(&v)
+			Ω(err).ShouldNot(HaveOccurred())
+			Ω(v).Should(Equal(map[string][]byte{
+				"picture": []byte{0x47, 0x49, 0x46, 0x38, 0x39, 0x61, 0x0c, 0x00,
+					0x0c, 0x00, 0x84, 0x00, 0x00, 0xff, 0xff, 0xf7, 0xf5, 0xf5, 0xee,
+					0xe9, 0xe9, 0xe5, 0x66, 0x66, 0x66, 0x00, 0x00, 0x00, 0xe7, 0xe7,
+					0xe7, 0x5e, 0x5e, 0x5e, 0xf3, 0xf3, 0xed, 0x8e, 0x8e, 0x8e, 0xe0,
+					0xe0, 0xe0, 0x9f, 0x9f, 0x9f, 0x93, 0x93, 0x93, 0xa7, 0xa7, 0xa7,
+					0x9e, 0x9e, 0x9e, 0x69, 0x5e, 0x10, 0x27, 0x20, 0x82, 0x0a, 0x01,
+					0x00, 0x3b},
+			}))
+		})
+
+		It("to string", func() {
+			d := NewDecoder(strings.NewReader("!binary YWJjZGVmZw=="))
+			var v string
+
+			err := d.Decode(&v)
+			Ω(err).ShouldNot(HaveOccurred())
+			Ω(v).Should(Equal("abcdefg"))
+		})
+
+		It("to string via alternate form", func() {
+			d := NewDecoder(strings.NewReader("!!binary YWJjZGVmZw=="))
+			var v string
+
+			err := d.Decode(&v)
+			Ω(err).ShouldNot(HaveOccurred())
+			Ω(v).Should(Equal("abcdefg"))
+		})
+
+		It("to interface", func() {
+			d := NewDecoder(strings.NewReader("!binary YWJjZGVmZw=="))
+			var v interface{}
+
+			err := d.Decode(&v)
+			Ω(err).ShouldNot(HaveOccurred())
+			Ω(v).Should(Equal([]byte("abcdefg")))
+		})
 	})
 
-	It("Decodes aliases", func() {
-		f, _ := os.Open("fixtures/specification/example2_10.yaml")
-		d := NewDecoder(f)
-		v := make(map[string][]string)
+	Context("Aliases", func() {
+		Context("to known types", func() {
+			It("aliases scalars", func() {
+				f, _ := os.Open("fixtures/specification/example2_10.yaml")
+				d := NewDecoder(f)
+				v := make(map[string][]string)
 
-		err := d.Decode(&v)
-		Ω(err).ShouldNot(HaveOccurred())
-		Ω(v).Should(Equal(map[string][]string{
-			"hr":  []string{"Mark McGwire", "Sammy Sosa"},
-			"rbi": []string{"Sammy Sosa", "Ken Griffey"},
-		}))
+				err := d.Decode(&v)
+				Ω(err).ShouldNot(HaveOccurred())
+				Ω(v).Should(Equal(map[string][]string{
+					"hr":  {"Mark McGwire", "Sammy Sosa"},
+					"rbi": {"Sammy Sosa", "Ken Griffey"},
+				}))
+			})
+
+			It("aliases sequences", func() {
+				d := NewDecoder(strings.NewReader(`
+---
+hr: &ss
+  - MG
+  - SS
+rbi: *ss
+`))
+				v := make(map[string][]string)
+				err := d.Decode(&v)
+				Ω(err).ShouldNot(HaveOccurred())
+				Ω(v).Should(Equal(map[string][]string{
+					"hr":  {"MG", "SS"},
+					"rbi": {"MG", "SS"},
+				}))
+			})
+
+			It("aliases maps", func() {
+				d := NewDecoder(strings.NewReader(`
+---
+hr: &ss
+  MG : SS
+rbi: *ss
+`))
+				v := make(map[string]map[string]string)
+				err := d.Decode(&v)
+				Ω(err).ShouldNot(HaveOccurred())
+				Ω(v).Should(Equal(map[string]map[string]string{
+					"hr":  {"MG": "SS"},
+					"rbi": {"MG": "SS"},
+				}))
+			})
+		})
+
+		It("aliases to different types", func() {
+			type S struct {
+				A map[string]int
+				C map[string]string
+			}
+			d := NewDecoder(strings.NewReader(`
+---
+a: &map
+  b : 1
+c: *map
+`))
+			var s S
+			err := d.Decode(&s)
+			Ω(err).ShouldNot(HaveOccurred())
+			Ω(s).Should(Equal(S{
+				A: map[string]int{"b": 1},
+				C: map[string]string{"b": "1"},
+			}))
+		})
+
+		It("fails if an anchor is undefined", func() {
+			d := NewDecoder(strings.NewReader(`
+---
+a: *missing
+`))
+			m := make(map[string]string)
+			err := d.Decode(&m)
+			Ω(err).Should(HaveOccurred())
+		})
+
+		Context("to Interface", func() {
+			It("aliases scalars", func() {
+				f, _ := os.Open("fixtures/specification/example2_10.yaml")
+				d := NewDecoder(f)
+				v := make(map[string]interface{})
+
+				err := d.Decode(&v)
+				Ω(err).ShouldNot(HaveOccurred())
+				Ω(v).Should(Equal(map[string]interface{}{
+					"hr":  []interface{}{"Mark McGwire", "Sammy Sosa"},
+					"rbi": []interface{}{"Sammy Sosa", "Ken Griffey"},
+				}))
+			})
+
+			It("aliases sequences", func() {
+				d := NewDecoder(strings.NewReader(`
+---
+hr: &ss
+  - MG
+  - SS
+rbi: *ss
+`))
+				v := make(map[string]interface{})
+				err := d.Decode(&v)
+				Ω(err).ShouldNot(HaveOccurred())
+				Ω(v).Should(Equal(map[string]interface{}{
+					"hr":  []interface{}{"MG", "SS"},
+					"rbi": []interface{}{"MG", "SS"},
+				}))
+			})
+
+			It("aliases maps", func() {
+				d := NewDecoder(strings.NewReader(`
+---
+hr: &ss
+  MG : SS
+rbi: *ss
+`))
+				v := make(map[string]interface{})
+				err := d.Decode(&v)
+				Ω(err).ShouldNot(HaveOccurred())
+				Ω(v).Should(Equal(map[string]interface{}{
+					"hr":  map[interface{}]interface{}{"MG": "SS"},
+					"rbi": map[interface{}]interface{}{"MG": "SS"},
+				}))
+			})
+
+			It("supports duplicate aliases", func() {
+				d := NewDecoder(strings.NewReader(`
+---
+a: &a
+  b: 1
+x: *a
+y: *a
+`))
+				v := make(map[string]interface{})
+				err := d.Decode(&v)
+				Ω(err).ShouldNot(HaveOccurred())
+				Ω(v).Should(Equal(map[string]interface{}{
+					"a": map[interface{}]interface{}{"b": int64(1)},
+					"x": map[interface{}]interface{}{"b": int64(1)},
+					"y": map[interface{}]interface{}{"b": int64(1)},
+				}))
+			})
+
+			It("supports overriden anchors", func() {
+				d := NewDecoder(strings.NewReader(`
+---
+First occurrence: &anchor Foo
+Second occurrence: *anchor
+Override anchor: &anchor Bar
+Reuse anchor: *anchor
+`))
+				v := make(map[string]interface{})
+				err := d.Decode(&v)
+				Ω(err).ShouldNot(HaveOccurred())
+				Ω(v).Should(Equal(map[string]interface{}{
+					"First occurrence":  "Foo",
+					"Second occurrence": "Foo",
+					"Override anchor":   "Bar",
+					"Reuse anchor":      "Bar",
+				}))
+			})
+
+			It("fails if an anchor is undefined", func() {
+				d := NewDecoder(strings.NewReader(`
+---
+a: *missing
+`))
+				var i interface{}
+				err := d.Decode(&i)
+				Ω(err).Should(HaveOccurred())
+			})
+
+		})
+
+		It("supports composing aliases", func() {
+			d := NewDecoder(strings.NewReader(`
+---
+a: &a b
+x: &b
+  d: *a
+z: *b
+`))
+			v := make(map[string]interface{})
+			err := d.Decode(&v)
+			Ω(err).ShouldNot(HaveOccurred())
+			Ω(v).Should(Equal(map[string]interface{}{
+				"a": "b",
+				"x": map[interface{}]interface{}{"d": "b"},
+				"z": map[interface{}]interface{}{"d": "b"},
+			}))
+		})
+
+		It("redefinition while composing aliases", func() {
+			d := NewDecoder(strings.NewReader(`
+---
+a: &a b
+x: &c
+  d : &a 1
+y: *a
+`))
+			v := make(map[string]interface{})
+			err := d.Decode(&v)
+			Ω(err).ShouldNot(HaveOccurred())
+			Ω(v).Should(Equal(map[string]interface{}{
+				"a": "b",
+				"x": map[interface{}]interface{}{"d": int64(1)},
+				"y": int64(1),
+			}))
+		})
 	})
 
 	Context("When decoding fails", func() {
@@ -397,7 +750,6 @@ var _ = Describe("Decode", func() {
 				Ω(err).ShouldNot(HaveOccurred())
 				Ω(v.Value).Should(BeNil())
 			})
-
 		})
 
 		Context("Receiver is a pointer", func() {
@@ -415,7 +767,7 @@ var _ = Describe("Decode", func() {
 
 				err := d.Decode(&v)
 				Ω(err).ShouldNot(HaveOccurred())
-				Ω(v.Tag).Should(Equal("!!str"))
+				Ω(v.Tag).Should(Equal(yaml_STR_TAG))
 				Ω(v.Value).Should(Equal("abc"))
 			})
 
@@ -425,7 +777,7 @@ var _ = Describe("Decode", func() {
 
 				err := d.Decode(&v)
 				Ω(err).ShouldNot(HaveOccurred())
-				Ω(v.Tag).Should(Equal("!!seq"))
+				Ω(v.Tag).Should(Equal(yaml_SEQ_TAG))
 				Ω(v.Value).Should(Equal([]interface{}{"abc", "def"}))
 			})
 
@@ -435,7 +787,7 @@ var _ = Describe("Decode", func() {
 
 				err := d.Decode(&v)
 				Ω(err).ShouldNot(HaveOccurred())
-				Ω(v.Tag).Should(Equal("!!map"))
+				Ω(v.Tag).Should(Equal(yaml_MAP_TAG))
 				Ω(v.Value).Should(Equal(map[interface{}]interface{}{"a": "bc"}))
 			})
 		})

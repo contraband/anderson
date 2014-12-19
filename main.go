@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/fraenkel/candiedyaml"
+	"github.com/cloudfoundry-incubator/candiedyaml"
 	"github.com/mitchellh/colorstring"
 
 	"github.com/xoebus/anderson/anderson"

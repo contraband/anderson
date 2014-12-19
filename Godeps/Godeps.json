@@ -1,13 +1,13 @@
 {
 	"ImportPath": "github.com/xoebus/anderson",
-	"GoVersion": "go1.3.1",
+	"GoVersion": "go1.4",
 	"Packages": [
 		"./..."
 	],
 	"Deps": [
 		{
-			"ImportPath": "github.com/fraenkel/candiedyaml",
-			"Rev": "84842532f8194fe186b48a009251dfaec9924ccd"
+			"ImportPath": "github.com/cloudfoundry-incubator/candiedyaml",
+			"Rev": "150e4e8f749b21a7f0de8e3cfd885143fcea6b32"
 		},
 		{
 			"ImportPath": "github.com/mitchellh/colorstring",
@@ -15,13 +15,13 @@
 		},
 		{
 			"ImportPath": "github.com/onsi/ginkgo",
-			"Comment": "v1.1.0-11-ge809316",
-			"Rev": "e8093161dcbdab0a59dfe56f3f8c867d243ac75f"
+			"Comment": "v1.1.0-32-g291f28e",
+			"Rev": "291f28e66dd277f35d3635990a7448759645c7e7"
 		},
 		{
 			"ImportPath": "github.com/onsi/gomega",
-			"Comment": "v1.0-12-g3ca2515",
-			"Rev": "3ca2515afb00bc39bc77d27cdbce85a7caaf103e"
+			"Comment": "v1.0-26-gdc751ce",
+			"Rev": "dc751ce5f266d83c26fae5c0a9093973b29cb61d"
 		},
 		{
 			"ImportPath": "github.com/ryanuber/go-license",

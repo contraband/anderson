@@ -28,6 +28,7 @@ import (
 
 var byteSliceType = reflect.TypeOf([]byte(nil))
 
+var binary_tags = [][]byte{[]byte("!binary"), []byte(yaml_BINARY_TAG)}
 var bool_values map[string]bool
 var null_values map[string]bool
 
@@ -54,7 +55,6 @@ func init() {
 	null_values["null"] = true
 	null_values["Null"] = true
 	null_values["NULL"] = true
-	null_values[""] = true
 
 	timestamp_regexp = regexp.MustCompile("^([0-9][0-9][0-9][0-9])-([0-9][0-9]?)-([0-9][0-9]?)(?:(?:[Tt]|[ \t]+)([0-9][0-9]?):([0-9][0-9]):([0-9][0-9])(?:\\.([0-9]*))?(?:[ \t]*(?:Z|([-+][0-9][0-9]?)(?::([0-9][0-9])?)?))?)?$")
 	ymd_regexp = regexp.MustCompile("^([0-9][0-9][0-9][0-9])-([0-9][0-9]?)-([0-9][0-9]?)$")
@@ -65,7 +65,7 @@ func resolve(event yaml_event_t, v reflect.Value, useNumber bool) (string, error
 
 	if null_values[val] {
 		v.Set(reflect.Zero(v.Type()))
-		return "!!null", nil
+		return yaml_NULL_TAG, nil
 	}
 
 	switch v.Kind() {
@@ -75,12 +75,11 @@ func resolve(event yaml_event_t, v reflect.Value, useNumber bool) (string, error
 			if n, ok := i.(Number); ok {
 				v.Set(reflect.ValueOf(n))
 				return tag, nil
-			} else {
-				return "", errors.New("Not a Number: " + reflect.TypeOf(i).String())
 			}
-		} else {
-			v.SetString(val)
+			return "", errors.New("Not a Number: " + reflect.TypeOf(i).String())
 		}
+
+		return resolve_string(val, v, event)
 	case reflect.Bool:
 		return resolve_bool(val, v)
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
@@ -91,25 +90,58 @@ func resolve(event yaml_event_t, v reflect.Value, useNumber bool) (string, error
 		return resolve_float(val, v, useNumber)
 	case reflect.Interface:
 		_, i := resolveInterface(event, useNumber)
-		v.Set(reflect.ValueOf(i))
+		if i != nil {
+			v.Set(reflect.ValueOf(i))
+		} else {
+			v.Set(reflect.Zero(v.Type()))
+		}
+
 	case reflect.Struct:
 		return resolve_time(val, v)
 	case reflect.Slice:
 		if v.Type() != byteSliceType {
 			return "", errors.New("Cannot resolve into " + v.Type().String())
 		}
-		b := make([]byte, base64.StdEncoding.DecodedLen(len(event.value)))
-		n, err := base64.StdEncoding.Decode(b, event.value)
+		b, err := decode_binary(event.value)
 		if err != nil {
 			return "", err
 		}
 
-		v.Set(reflect.ValueOf(b[0:n]))
+		v.Set(reflect.ValueOf(b))
 	default:
 		return "", errors.New("Resolve failed for " + v.Kind().String())
 	}
 
-	return "!!str", nil
+	return yaml_STR_TAG, nil
+}
+
+func hasBinaryTag(event yaml_event_t) bool {
+	for _, tag := range binary_tags {
+		if bytes.Equal(event.tag, tag) {
+			return true
+		}
+	}
+	return false
+}
+
+func decode_binary(value []byte) ([]byte, error) {
+	b := make([]byte, base64.StdEncoding.DecodedLen(len(value)))
+	n, err := base64.StdEncoding.Decode(b, value)
+	return b[:n], err
+}
+
+func resolve_string(val string, v reflect.Value, event yaml_event_t) (string, error) {
+	if len(event.tag) > 0 {
+		if hasBinaryTag(event) {
+			b, err := decode_binary(event.value)
+			if err != nil {
+				return "", err
+			}
+			val = string(b)
+		}
+	}
+	v.SetString(val)
+	return yaml_STR_TAG, nil
 }
 
 func resolve_bool(val string, v reflect.Value) (string, error) {
@@ -119,13 +151,13 @@ func resolve_bool(val string, v reflect.Value) (string, error) {
 	}
 
 	v.SetBool(b)
-	return "!!bool", nil
+	return yaml_BOOL_TAG, nil
 }
 
 func resolve_int(val string, v reflect.Value, useNumber bool) (string, error) {
 	original := val
 	val = strings.Replace(val, "_", "", -1)
-	var value int64
+	var value uint64
 
 	isNumberValue := v.Type() == numberType
 
@@ -137,7 +169,7 @@ func resolve_int(val string, v reflect.Value, useNumber bool) (string, error) {
 		val = val[1:]
 	}
 
-	base := 10
+	base := 0
 	if val == "0" {
 		if isNumberValue {
 			v.SetString("0")
@@ -145,62 +177,41 @@ func resolve_int(val string, v reflect.Value, useNumber bool) (string, error) {
 			v.Set(reflect.Zero(v.Type()))
 		}
 
-		return "!!int", nil
+		return yaml_INT_TAG, nil
 	}
 
-	if strings.HasPrefix(val, "0b") {
-		base = 2
-		val = val[2:]
-	} else if strings.HasPrefix(val, "0x") {
-		base = 16
-		val = val[2:]
-	} else if val[0] == '0' {
+	if strings.HasPrefix(val, "0o") {
 		base = 8
-		val = val[1:]
-	} else if strings.Contains(val, ":") {
-		digits := strings.Split(val, ":")
-		bes := int64(1)
-		for j := len(digits) - 1; j >= 0; j-- {
-			n, err := strconv.ParseInt(digits[j], 10, 64)
-			n *= bes
-			if err != nil {
-				return "", errors.New("Integer: " + original)
-			}
-			value += n
-			bes *= 60
-		}
-
-		value *= sign
-
-		if isNumberValue {
-			v.SetString(strconv.FormatInt(value, 10))
-		} else {
-			if v.OverflowInt(value) {
-				return "", errors.New("Integer: " + original)
-			}
-
-			v.SetInt(value)
-		}
-		return "!!int", nil
+		val = val[2:]
 	}
 
-	value, err := strconv.ParseInt(val, base, 64)
+	value, err := strconv.ParseUint(val, base, 64)
 	if err != nil {
 		return "", errors.New("Integer: " + original)
 	}
-	value *= sign
 
-	if isNumberValue {
-		v.SetString(strconv.FormatInt(value, 10))
-	} else {
-		if v.OverflowInt(value) {
-			return "", errors.New("Integer: " + original)
+	var val64 int64
+	if value <= math.MaxInt64 {
+		val64 = int64(value)
+		if sign == -1 {
+			val64 = -val64
 		}
-
-		v.SetInt(value)
+	} else if sign == -1 && value == uint64(math.MaxInt64)+1 {
+		val64 = math.MinInt64
+	} else {
+		return "", errors.New("Integer: " + original)
 	}
 
-	return "!!int", nil
+	if isNumberValue {
+		v.SetString(strconv.FormatInt(val64, 10))
+	} else {
+		if v.OverflowInt(val64) {
+			return "", errors.New("Integer: " + original)
+		}
+		v.SetInt(val64)
+	}
+
+	return yaml_INT_TAG, nil
 }
 
 func resolve_uint(val string, v reflect.Value, useNumber bool) (string, error) {
@@ -218,7 +229,7 @@ func resolve_uint(val string, v reflect.Value, useNumber bool) (string, error) {
 		val = val[1:]
 	}
 
-	base := 10
+	base := 0
 	if val == "0" {
 		if isNumberValue {
 			v.SetString("0")
@@ -226,41 +237,12 @@ func resolve_uint(val string, v reflect.Value, useNumber bool) (string, error) {
 			v.Set(reflect.Zero(v.Type()))
 		}
 
-		return "!!int", nil
+		return yaml_INT_TAG, nil
 	}
 
-	if strings.HasPrefix(val, "0b") {
-		base = 2
-		val = val[2:]
-	} else if strings.HasPrefix(val, "0x") {
-		base = 16
-		val = val[2:]
-	} else if val[0] == '0' {
+	if strings.HasPrefix(val, "0o") {
 		base = 8
-		val = val[1:]
-	} else if strings.Contains(val, ":") {
-		digits := strings.Split(val, ":")
-		bes := uint64(1)
-		for j := len(digits) - 1; j >= 0; j-- {
-			n, err := strconv.ParseUint(digits[j], 10, 64)
-			n *= bes
-			if err != nil {
-				return "", errors.New("Unsigned Integer: " + original)
-			}
-			value += n
-			bes *= 60
-		}
-
-		if isNumberValue {
-			v.SetString(strconv.FormatUint(value, 10))
-		} else {
-			if v.OverflowUint(value) {
-				return "", errors.New("Unsigned Integer: " + original)
-			}
-
-			v.SetUint(value)
-		}
-		return "!!int", nil
+		val = val[2:]
 	}
 
 	value, err := strconv.ParseUint(val, base, 64)
@@ -278,7 +260,7 @@ func resolve_uint(val string, v reflect.Value, useNumber bool) (string, error) {
 		v.SetUint(value)
 	}
 
-	return "!!int", nil
+	return yaml_INT_TAG, nil
 }
 
 func resolve_float(val string, v reflect.Value, useNumber bool) (string, error) {
@@ -304,19 +286,6 @@ func resolve_float(val string, v reflect.Value, useNumber bool) (string, error) 
 		value = math.Inf(sign)
 	} else if valLower == ".nan" {
 		value = math.NaN()
-	} else if strings.Contains(val, ":") {
-		digits := strings.Split(val, ":")
-		bes := float64(1)
-		for j := len(digits) - 1; j >= 0; j-- {
-			n, err := strconv.ParseFloat(digits[j], typeBits)
-			n *= bes
-			if err != nil {
-				return "", errors.New("Float: " + val)
-			}
-			value += n
-			bes *= 60
-		}
-		value *= float64(sign)
 	} else {
 		var err error
 		value, err = strconv.ParseFloat(val, typeBits)
@@ -337,7 +306,7 @@ func resolve_float(val string, v reflect.Value, useNumber bool) (string, error) 
 		v.SetFloat(value)
 	}
 
-	return "!!float", nil
+	return yaml_FLOAT_TAG, nil
 }
 
 func resolve_time(val string, v reflect.Value) (string, error) {
@@ -391,13 +360,13 @@ func resolve_time(val string, v reflect.Value) (string, error) {
 }
 
 func resolveInterface(event yaml_event_t, useNumber bool) (string, interface{}) {
-	if len(event.value) == 0 {
-		return "", nil
-	}
-
 	val := string(event.value)
 	if len(event.tag) == 0 && !event.implicit {
 		return "", val
+	}
+
+	if len(val) == 0 {
+		return yaml_NULL_TAG, nil
 	}
 
 	var result interface{}
@@ -418,7 +387,7 @@ func resolveInterface(event yaml_event_t, useNumber bool) (string, interface{}) 
 
 		v := reflect.ValueOf(result).Elem()
 		if _, err := resolve_int(val, v, useNumber); err == nil {
-			return "!!int", v.Interface()
+			return yaml_INT_TAG, v.Interface()
 		}
 
 		f := float64(0)
@@ -430,7 +399,7 @@ func resolveInterface(event yaml_event_t, useNumber bool) (string, interface{}) 
 
 		v = reflect.ValueOf(result).Elem()
 		if _, err := resolve_float(val, v, useNumber); err == nil {
-			return "!!float", v.Interface()
+			return yaml_FLOAT_TAG, v.Interface()
 		}
 
 		if !sign {
@@ -441,11 +410,11 @@ func resolveInterface(event yaml_event_t, useNumber bool) (string, interface{}) 
 		}
 	case bytes.IndexByte(nulls, c) != -1:
 		if null_values[val] {
-			return "!!null", nil
+			return yaml_NULL_TAG, nil
 		}
 		b := false
 		if _, err := resolve_bool(val, reflect.ValueOf(&b).Elem()); err == nil {
-			return "!!bool", b
+			return yaml_BOOL_TAG, b
 		}
 	case c == '.':
 		f := float64(0)
@@ -457,14 +426,21 @@ func resolveInterface(event yaml_event_t, useNumber bool) (string, interface{}) 
 
 		v := reflect.ValueOf(result).Elem()
 		if _, err := resolve_float(val, v, useNumber); err == nil {
-			return "!!float", v.Interface()
+			return yaml_FLOAT_TAG, v.Interface()
 		}
 	case bytes.IndexByte(bools, c) != -1:
 		b := false
 		if _, err := resolve_bool(val, reflect.ValueOf(&b).Elem()); err == nil {
-			return "!!bool", b
+			return yaml_BOOL_TAG, b
 		}
 	}
 
-	return "!!str", string(event.value)
+	if hasBinaryTag(event) {
+		bytes, err := decode_binary(event.value)
+		if err == nil {
+			return yaml_BINARY_TAG, bytes
+		}
+	}
+
+	return yaml_STR_TAG, val
 }
