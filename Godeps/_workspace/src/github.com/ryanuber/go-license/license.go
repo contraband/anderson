@@ -12,17 +12,18 @@ import (
 
 const (
 	// Recognized license types
-	LicenseMIT      = "MIT"
-	LicenseNewBSD   = "NewBSD"
-	LicenseFreeBSD  = "FreeBSD"
-	LicenseApache20 = "Apache-2.0"
-	LicenseMPL20    = "MPL-2.0"
-	LicenseGPL20    = "GPL-2.0"
-	LicenseGPL30    = "GPL-3.0"
-	LicenseLGPL21   = "LGPL-2.1"
-	LicenseLGPL30   = "LGPL-3.0"
-	LicenseCDDL10   = "CDDL-1.0"
-	LicenseEPL10    = "EPL-1.0"
+	LicenseMIT       = "MIT"
+	LicenseNewBSD    = "NewBSD"
+	LicenseFreeBSD   = "FreeBSD"
+	LicenseApache20  = "Apache-2.0"
+	LicenseMPL20     = "MPL-2.0"
+	LicenseGPL20     = "GPL-2.0"
+	LicenseGPL30     = "GPL-3.0"
+	LicenseLGPL21    = "LGPL-2.1"
+	LicenseLGPL30    = "LGPL-3.0"
+	LicenseCDDL10    = "CDDL-1.0"
+	LicenseEPL10     = "EPL-1.0"
+	LicenseUnlicense = "Unlicense"
 
 	// Various errors
 	ErrNoLicenseFile       = "license: unable to find any license file"
@@ -34,6 +35,7 @@ const (
 var DefaultLicenseFiles = []string{
 	"LICENSE", "LICENSE.txt", "LICENSE.md", "license.txt",
 	"COPYING", "COPYING.txt", "COPYING.md", "copying.txt",
+	"UNLICENSE",
 }
 
 // A slice of standardized license abbreviations
@@ -49,6 +51,7 @@ var KnownLicenses = []string{
 	LicenseLGPL30,
 	LicenseCDDL10,
 	LicenseEPL10,
+	LicenseUnlicense,
 }
 
 // License describes a software license
@@ -198,6 +201,10 @@ func (l *License) GuessType() error {
 
 	case scan(comp, "eclipse public license - v 1.0"):
 		l.Type = LicenseEPL10
+
+	case scan(comp, "this is free and unencumbered software released into "+
+		"the public domain"):
+		l.Type = LicenseUnlicense
 
 	default:
 		return errors.New(ErrUnrecognizedLicense)

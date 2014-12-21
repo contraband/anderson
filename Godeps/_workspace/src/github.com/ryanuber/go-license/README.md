@@ -64,6 +64,9 @@ Common Development and Distribution License v1.0
 `EPL-1.0`<br>
 Eclipse Public License v1.0 ([text](fixtures/licenses/EPL-1.0))
 
+`Unlicense`<br>
+Unlicense ([text](fixtures/licenses/Unlicense))
+
 ## Example
 
 ```go
