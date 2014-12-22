@@ -44,7 +44,7 @@ exceptions:
 ```
 
 The whitelisted section is for licenses that are always allowed. Conversely,
-the blacklist section is for licenses that are never allowed an will always
+the blacklist section is for licenses that are never allowed and will always
 fail a build. Any licenses that are not explicitly mentioned are considered
 to be in a "greylist" and will need to be explicitly allowed by adding the
 import path to the exceptions.
