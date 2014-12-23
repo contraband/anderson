@@ -101,12 +101,16 @@ func main() {
 }
 
 func lister() Lister {
-	stat, _ := os.Stdin.Stat()
-	if (stat.Mode() & os.ModeCharDevice) == 0 {
+	if isStdinPipe() {
 		return anderson.StdinLister{}
 	} else {
 		return anderson.PackageLister{}
 	}
+}
+
+func isStdinPipe() bool {
+	stat, _ := os.Stdin.Stat()
+	return (stat.Mode() & os.ModeCharDevice) == 0
 }
 
 func fatal(err error) {
