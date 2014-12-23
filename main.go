@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -29,10 +28,10 @@ func main() {
 		Config: config,
 	}
 
-	say("[blue]> Hold still citizen, scanning dependencies for contraband...")
+	info("Hold still citizen, scanning dependencies for contraband...")
 	dependencies, err := lister.ListDependencies()
 	if err != nil {
-		fatal(err)
+		fatal(err.Error())
 	}
 
 	failed := false
@@ -40,7 +39,7 @@ func main() {
 	for _, importPath := range dependencies {
 		path, err := anderson.LookGopath(importPath)
 		if err != nil {
-			fatal(fmt.Errorf("Could not find %s in your GOPATH...", importPath))
+			fatal("Could not find %s in your GOPATH...", importPath)
 		}
 
 		licenseType, licenseDeclarationPath, licenseName, err := classifier.Classify(path, importPath)
@@ -48,14 +47,12 @@ func main() {
 
 		containingGopath, err := anderson.ContainingGopath(importPath)
 		if err != nil {
-			err = fmt.Errorf("Unable to find containing GOPATH for %s: %s", licenseDeclarationPath, err)
-			fatal(err)
+			fatal("Unable to find containing GOPATH for %s: %s", licenseDeclarationPath, err)
 		}
 
 		relPath, err := filepath.Rel(filepath.Join(containingGopath, "src"), licenseDeclarationPath)
 		if err != nil {
-			err = fmt.Errorf("Unable to create relative path for %s: %s", licenseDeclarationPath, err)
-			fatal(err)
+			fatal("Unable to create relative path for %s: %s", licenseDeclarationPath, err)
 		}
 
 		classified[relPath] = License{
@@ -97,8 +94,7 @@ func loadConfig() (config anderson.Config, missing bool) {
 	}
 
 	if err := candiedyaml.NewDecoder(configFile).Decode(&config); err != nil {
-		err := errors.New("Looks like your .anderson.yml file is invalid YAML!")
-		fatal(err)
+		fatal("Looks like your .anderson.yml file is invalid YAML!")
 	}
 
 	return config, false
@@ -117,9 +113,14 @@ func isStdinPipe() bool {
 	return (stat.Mode() & os.ModeCharDevice) == 0
 }
 
-func fatal(err error) {
-	say(fmt.Sprintf("[red]> %s", err))
+func fatal(err string, args ...interface{}) {
+	message := fmt.Sprintf(err, args)
+	say(fmt.Sprintf("[red]> %s", message))
 	os.Exit(1)
+}
+
+func info(message string) {
+	say(fmt.Sprintf("[blue]> %s", message))
 }
 
 func say(message string) {
