@@ -23,31 +23,19 @@ type Lister interface {
 }
 
 func main() {
-	say("[blue]> Hold still citizen, scanning dependencies for contraband...")
-
-	emptyConfig := true
-	config := anderson.Config{}
-	configFile, err := os.Open(".anderson.yml")
-	if err == nil {
-		if err := candiedyaml.NewDecoder(configFile).Decode(&config); err != nil {
-			fatal(errors.New("Looks like your .anderson.yml file is invalid YAML!"))
-		}
-
-		emptyConfig = false
-	}
-
+	config, missingConfig := loadConfig()
 	lister := lister()
 	classifier := anderson.LicenseClassifier{
 		Config: config,
 	}
 
-	failed := false
-
+	say("[blue]> Hold still citizen, scanning dependencies for contraband...")
 	dependencies, err := lister.ListDependencies()
 	if err != nil {
 		fatal(err)
 	}
 
+	failed := false
 	classified := map[string]License{}
 	for _, importPath := range dependencies {
 		path, err := anderson.LookGopath(importPath)
@@ -60,12 +48,14 @@ func main() {
 
 		containingGopath, err := anderson.ContainingGopath(importPath)
 		if err != nil {
-			fatal(fmt.Errorf("Unable to find containing GOPATH for %s: %s", licenseDeclarationPath, err))
+			err = fmt.Errorf("Unable to find containing GOPATH for %s: %s", licenseDeclarationPath, err)
+			fatal(err)
 		}
 
 		relPath, err := filepath.Rel(filepath.Join(containingGopath, "src"), licenseDeclarationPath)
 		if err != nil {
-			fatal(fmt.Errorf("Unable to create relative path for %s: %s", licenseDeclarationPath, err))
+			err = fmt.Errorf("Unable to create relative path for %s: %s", licenseDeclarationPath, err)
+			fatal(err)
 		}
 
 		classified[relPath] = License{
@@ -78,7 +68,7 @@ func main() {
 		var message string
 		var color string
 
-		if emptyConfig {
+		if missingConfig {
 			message = license.Name
 			color = "white"
 		} else {
@@ -98,6 +88,20 @@ func main() {
 	if failed {
 		os.Exit(1)
 	}
+}
+
+func loadConfig() (config anderson.Config, missing bool) {
+	configFile, err := os.Open(".anderson.yml")
+	if err != nil {
+		return config, true
+	}
+
+	if err := candiedyaml.NewDecoder(configFile).Decode(&config); err != nil {
+		err := errors.New("Looks like your .anderson.yml file is invalid YAML!")
+		fatal(err)
+	}
+
+	return config, false
 }
 
 func lister() Lister {
