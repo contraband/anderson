@@ -18,6 +18,10 @@ type License struct {
 	Name string
 }
 
+type Lister interface {
+	ListDependencies() ([]string, error)
+}
+
 func main() {
 	say("[blue]> Hold still citizen, scanning dependencies for contraband...")
 
@@ -32,7 +36,7 @@ func main() {
 		emptyConfig = false
 	}
 
-	lister := anderson.PackageLister{}
+	lister := lister()
 	classifier := anderson.LicenseClassifier{
 		Config: config,
 	}
@@ -93,6 +97,15 @@ func main() {
 
 	if failed {
 		os.Exit(1)
+	}
+}
+
+func lister() Lister {
+	stat, _ := os.Stdin.Stat()
+	if (stat.Mode() & os.ModeCharDevice) == 0 {
+		return anderson.StdinLister{}
+	} else {
+		return anderson.PackageLister{}
 	}
 }
 

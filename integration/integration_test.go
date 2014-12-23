@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -104,5 +105,13 @@ var _ = Describe("Anderson", func() {
 
 		Eventually(session).Should(Exit(1))
 		Eventually(session).ShouldNot(Say(`github.com/xoebus/prime/subdir`)) // does not show subdir
+	})
+
+	It("can accept a list of packages to scan on STDIN", func() {
+		andersonCommand.Stdin = strings.NewReader("github.com/xoebus/blacklist\n")
+		session := runAnderson()
+
+		Eventually(session).Should(Exit(1))
+		Eventually(session).ShouldNot(Say("github.com/xoebus/whitelist.*CHECKS OUT"))
 	})
 })

@@ -1,6 +1,7 @@
 package anderson
 
 import (
+	"bufio"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -9,6 +10,17 @@ import (
 	"sort"
 	"strings"
 )
+
+type StdinLister struct{}
+
+func (l StdinLister) ListDependencies() ([]string, error) {
+	deps := []string{}
+	scanner := bufio.NewScanner(os.Stdin)
+	for scanner.Scan() {
+		deps = append(deps, scanner.Text())
+	}
+	return deps, scanner.Err()
+}
 
 type Package struct {
 	Dir        string
