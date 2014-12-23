@@ -16,6 +16,12 @@ valid licenses. The syntax of this file can be found below.
 
 ![Without Config](media/with-config.png)
 
+Anderson can operate in two different modes. When invoked with input on *STDIN*
+it will read the packages that it should scan from there. If no input is given
+then it will make a best effort attempt to scan the packages that it should
+scan itself. Automatic scanning can sometimes fail if you have transitive
+(often test) dependencies that you do not include.
+
 Most of the package and dependency listing code was graciously taken from
 [Godep](https://github.com/tools/godep).
 
