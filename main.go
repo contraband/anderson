@@ -63,23 +63,23 @@ func main() {
 
 	for relPath, license := range classified {
 		var message string
-		var color string
+		var messageLen int
 
 		if missingConfig {
-			message = license.Name
-			color = "white"
+			message = fmt.Sprintf("[white]%s", license.Name)
+			messageLen = len(license.Name)
 		} else {
-			message = license.Type.Message()
-			color = license.Type.Color()
+			message = fmt.Sprintf("(%s) [%s]%s", license.Name, license.Type.Color(), license.Type.Message())
+			messageLen = len(license.Name) + len("() ") + len(license.Type.Message())
 		}
 
-		totalSize := len(message) + len(relPath)
+		totalSize := messageLen + len(relPath)
 		whitespace := " "
 		if totalSize < 80 {
 			whitespace = strings.Repeat(" ", 80-totalSize)
 		}
 
-		say(fmt.Sprintf("[white]%s%s[%s]%s", relPath, whitespace, color, message))
+		say(fmt.Sprintf("[white]%s%s%s", relPath, whitespace, message))
 	}
 
 	if failed {
