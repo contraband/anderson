@@ -26,7 +26,7 @@ var andersonPath string
 
 var _ = BeforeSuite(func() {
 	var err error
-	andersonPath, err = gexec.Build("github.com/xoebus/anderson")
+	andersonPath, err = gexec.Build("github.com/contraband/anderson")
 	Ω(err).ShouldNot(HaveOccurred())
 })
 
