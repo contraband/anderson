@@ -9,7 +9,7 @@ import (
 	"github.com/cloudfoundry-incubator/candiedyaml"
 	"github.com/mitchellh/colorstring"
 
-	"github.com/xoebus/anderson/anderson"
+	"github.com/contraband/anderson/anderson"
 )
 
 type License struct {

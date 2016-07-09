@@ -28,7 +28,7 @@ Most of the package and dependency listing code was graciously taken from
 ## installation
 
 ```
-go get -u github.com/xoebus/anderson
+go get -u github.com/contraband/anderson
 ```
 
 ## configuration
