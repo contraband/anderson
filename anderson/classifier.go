@@ -8,12 +8,6 @@ import (
 	"github.com/ryanuber/go-license"
 )
 
-func init() {
-	license.DefaultLicenseFiles = append(license.DefaultLicenseFiles,
-		"README", "README.md",
-	)
-}
-
 const (
 	maxParentHops = 10
 )
