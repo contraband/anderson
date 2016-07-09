@@ -31,7 +31,7 @@ func main() {
 	info("Hold still citizen, scanning dependencies for contraband...")
 	dependencies, err := lister.ListDependencies()
 	if err != nil {
-		fatal(err.Error())
+		fatalf(err.Error())
 	}
 
 	failed := false
@@ -39,7 +39,7 @@ func main() {
 	for _, importPath := range dependencies {
 		path, err := anderson.LookGopath(importPath)
 		if err != nil {
-			fatal("Could not find %s in your GOPATH...", importPath)
+			fatalf("Could not find %s in your GOPATH...", importPath)
 		}
 
 		licenseType, licenseDeclarationPath, licenseName, err := classifier.Classify(path, importPath)
@@ -47,12 +47,12 @@ func main() {
 
 		containingGopath, err := anderson.ContainingGopath(importPath)
 		if err != nil {
-			fatal("Unable to find containing GOPATH for %s: %s", licenseDeclarationPath, err)
+			fatalf("Unable to find containing GOPATH for %s: %s", licenseDeclarationPath, err)
 		}
 
 		relPath, err := filepath.Rel(filepath.Join(containingGopath, "src"), licenseDeclarationPath)
 		if err != nil {
-			fatal("Unable to create relative path for %s: %s", licenseDeclarationPath, err)
+			fatalf("Unable to create relative path for %s: %s", licenseDeclarationPath, err)
 		}
 
 		classified[relPath] = License{
@@ -69,8 +69,8 @@ func main() {
 			message = fmt.Sprintf("[white]%s", license.Name)
 			messageLen = len(license.Name)
 		} else {
-			message = fmt.Sprintf("(%s) [%s]%s", license.Name, license.Type.Color(), license.Type.Message())
-			messageLen = len(license.Name) + len("() ") + len(license.Type.Message())
+			message = fmt.Sprintf("(%s) [%s]%10s", license.Name, license.Type.Color(), license.Type.Message())
+			messageLen = len(license.Name) + len("() ") + 9 // length of all messages
 		}
 
 		totalSize := messageLen + len(relPath)
@@ -94,7 +94,7 @@ func loadConfig() (config anderson.Config, missing bool) {
 	}
 
 	if err := candiedyaml.NewDecoder(configFile).Decode(&config); err != nil {
-		fatal("Looks like your .anderson.yml file is invalid YAML!")
+		fatalf("Looks like your .anderson.yml file is invalid YAML!")
 	}
 
 	return config, false
@@ -103,9 +103,9 @@ func loadConfig() (config anderson.Config, missing bool) {
 func lister() Lister {
 	if isStdinPipe() {
 		return anderson.StdinLister{}
-	} else {
-		return anderson.PackageLister{}
 	}
+
+	return anderson.PackageLister{}
 }
 
 func isStdinPipe() bool {
@@ -113,7 +113,7 @@ func isStdinPipe() bool {
 	return (stat.Mode() & os.ModeCharDevice) == 0
 }
 
-func fatal(err string, args ...interface{}) {
+func fatalf(err string, args ...interface{}) {
 	message := fmt.Sprintf(err, args)
 	say(fmt.Sprintf("[red]> %s", message))
 	os.Exit(1)
