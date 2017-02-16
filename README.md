@@ -46,12 +46,14 @@ blacklist:
 - GPL
 
 exceptions:
-- github.com/xoebus/greylist
+- github.com/xoebus/explicitly_allowed
+- github.com/xoebus/greylist/*
 ```
 
-The whitelisted section is for licenses that are always allowed. Conversely,
-the blacklist section is for licenses that are never allowed and will always
-fail a build. Any licenses that are not explicitly mentioned are considered
-to be in a "greylist" and will need to be explicitly allowed by adding the
-import path to the exceptions.
+The whitelisted section is for licenses that are always allowed. Conversely, the
+blacklist section is for licenses that are never allowed and will always fail a
+build. Any licenses that are not explicitly mentioned are considered to be in a
+"greylist" and will need to be explicitly allowed by adding the import path to
+the exceptions. You can use wildcards (`*`) at the end of paths in the
+exceptions list to allow all nested packages under a top level path.
 

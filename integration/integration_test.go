@@ -79,6 +79,20 @@ var _ = Describe("Anderson", func() {
 		Eventually(session).Should(Exit(1))
 	})
 
+	It("shows greylisted licences as 'CHECKS OUT'", func() {
+		session := runAnderson()
+
+		Eventually(session).Should(Say("github.com/xoebus/greylist-approve.*CHECKS OUT"))
+		Eventually(session).Should(Exit(1))
+	})
+
+	It("shows nested greylisted licences as 'CHECKS OUT' when a wildcard is used", func() {
+		session := runAnderson()
+
+		Eventually(session).Should(Say("github.com/xoebus/greylist-wildcard/wildcard.*CHECKS OUT"))
+		Eventually(session).Should(Exit(1))
+	})
+
 	It("shows projects with no license as 'NO LICENSE'", func() {
 		session := runAnderson()
 

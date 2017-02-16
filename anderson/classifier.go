@@ -39,7 +39,7 @@ func (c LicenseClassifier) classifyPath(path string, importPath string) (License
 	if err != nil {
 		switch err.Error() {
 		case license.ErrNoLicenseFile:
-			if contains(c.Config.Exceptions, importPath) {
+			if c.isException(importPath) {
 				return LicenseTypeAllowed, "Unknown", nil
 			}
 
@@ -63,7 +63,7 @@ func (c LicenseClassifier) classifyPath(path string, importPath string) (License
 		return LicenseTypeAllowed, l.Type, nil
 	}
 
-	if contains(c.Config.Exceptions, importPath) {
+	if c.isException(importPath) {
 		return LicenseTypeAllowed, l.Type, nil
 	}
 
@@ -83,6 +83,23 @@ func (c LicenseClassifier) parentPath(path string, hops int) string {
 	elements = append(elements, dots...)
 
 	return filepath.Clean(filepath.Join(elements...))
+}
+
+func (c LicenseClassifier) isException(importPath string) bool {
+	for _, exception := range c.Config.Exceptions {
+		if exception == importPath {
+			return true
+		}
+
+		if strings.HasSuffix(exception, "*") {
+			wildcard := strings.TrimRight(exception, "*")
+			if strings.HasPrefix(importPath, wildcard) {
+				return true
+			}
+		}
+	}
+
+	return false
 }
 
 func contains(haystack []string, needle string) bool {

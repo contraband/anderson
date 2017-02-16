@@ -7,3 +7,4 @@ blacklist:
 
 exceptions:
 - github.com/xoebus/greylist-approve
+- github.com/xoebus/greylist-wildcard/*
