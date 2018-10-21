@@ -2,8 +2,6 @@
 
 *checks your go dependencies for contraband licenses*
 
-![Judge Anderson](http://www.scifibloggers.com/wp-content/uploads/dredd-2012.jpg)
-
 ## usage
 
 If you don't have an `.anderson.yml` in your current directory then a listing
